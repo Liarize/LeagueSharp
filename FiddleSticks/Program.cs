@@ -227,11 +227,6 @@ namespace Fiddlesticks
                 E.Cast(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
 
-            if (W.IsReady())
-            {
-                W.CastOnUnit(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
-            }
-
             if (Config.SubMenu("Combo").Item("comboItems").GetValue<bool>())
             {
                 UseItems(target);
@@ -246,6 +241,11 @@ namespace Fiddlesticks
                         Player.Spellbook.CastSpell(SmiteSlot, target);
                     }
                 }
+            }
+
+            if (W.IsReady())
+            {
+                W.CastOnUnit(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
 
             if (!Config.Item("autoIgnite").GetValue<bool>())
