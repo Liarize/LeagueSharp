@@ -243,11 +243,6 @@ namespace Fiddlesticks
                 }
             }
 
-            if (W.IsReady())
-            {
-                W.CastOnUnit(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
-            }
-
             if (!Config.Item("autoIgnite").GetValue<bool>())
             {
                 return;
@@ -265,6 +260,11 @@ namespace Fiddlesticks
             }
 
             Player.Spellbook.CastSpell(IgniteSlot, target);
+
+            if (W.IsReady())
+            {
+                W.CastOnUnit(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
+            }
         }
 
         private static void Harass(Obj_AI_Base target) // Harras, not tested.
