@@ -1,11 +1,11 @@
 #region
 
+using LeagueSharp;
+using LeagueSharp.Common;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using LeagueSharp;
-using LeagueSharp.Common;
 
 #endregion
 
@@ -134,14 +134,14 @@ namespace Fiddlesticks
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
+            var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical); // Select default target
 
-            var comboKey = Config.Item("comboKey").GetValue<KeyBind>().Active;
+            var comboKey = Config.Item("comboKey").GetValue<KeyBind>().Active; // Keybinds
             var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
             var farmKey = Config.Item("farmKey").GetValue<KeyBind>().Active;
             var jungleClearKey = Config.Item("jungleKey").GetValue<KeyBind>().Active;
 
-            if (comboKey && target != null)
+            if (comboKey && target != null) 
             {
                 Combo(target);
             }
@@ -164,7 +164,7 @@ namespace Fiddlesticks
             }
         }
 
-        private static void Drawing_OnDraw(EventArgs args)
+        private static void Drawing_OnDraw(EventArgs args) // Drawing
         {
             if (Config.Item("mDraw").GetValue<bool>())
             {
@@ -184,7 +184,7 @@ namespace Fiddlesticks
             }
         }
 
-        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
+        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell) // Interrupter
         {
             if (!Config.SubMenu("Combo").Item("stopChannel").GetValue<bool>())
             {
@@ -206,13 +206,11 @@ namespace Fiddlesticks
             {
                 return;
             }
-            // Ultimate logic, needs proper rework
+            // Ultimate logic down here, needs proper rework
             if (Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true) == false)) // If target is not under turret -> Cast R
             {
                 R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
-
-            //  
 
             if (Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true)) == false && (Config.Item("dive").GetValue<bool>())) // If target is under turret and Turret dive is ON -> Dive with R
             {
@@ -261,7 +259,7 @@ namespace Fiddlesticks
                 return;
             }
 
-            if (!(Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) >= target.Health))
+            if (!(Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) >= target.Health)) // Auto-ignite if killable
             {
                 return;
             }
@@ -269,7 +267,7 @@ namespace Fiddlesticks
             Player.Spellbook.CastSpell(IgniteSlot, target);
         }
 
-        private static void Harass(Obj_AI_Base target)
+        private static void Harass(Obj_AI_Base target) // Harras, not tested.
         {
             if (target == null)
             {
@@ -309,7 +307,7 @@ namespace Fiddlesticks
             }
         }
 
-        private static void Farm()
+        private static void Farm() // Farming mode
         {
 
             var minions = MinionManager.GetMinions(Player.ServerPosition, W.Range);
@@ -319,7 +317,7 @@ namespace Fiddlesticks
                 return;
             }
 
-            if (Config.Item("eFarm").GetValue<bool>() && E.IsReady())
+            if (Config.Item("eFarm").GetValue<bool>() && E.IsReady()) // Logic for getting killable minions, isn't working, idk why
             {
                 foreach (
                 var minion in
@@ -336,8 +334,6 @@ namespace Fiddlesticks
 
             if (Config.Item("wFarm").GetValue<bool>() || !W.IsReady())
             {
-            
-
             foreach (
                 var minion in
                     minions.Where(
@@ -352,7 +348,7 @@ namespace Fiddlesticks
             }
         }
 
-        private static void JungleClear()
+        private static void JungleClear() // Jungleclear
         {
 
             var mobs = MinionManager.GetMinions(Player.ServerPosition, W.Range, MinionTypes.All,
@@ -362,7 +358,7 @@ namespace Fiddlesticks
                 return;
             }
 
-            var mob = mobs[0];
+            var mob = mobs[0]; // Idk what this is for :DD
             if (mob == null)
             {
                 return;
@@ -379,7 +375,7 @@ namespace Fiddlesticks
             
         }
 
-        private static float ComboDamage(Obj_AI_Base target)
+        private static float ComboDamage(Obj_AI_Base target) // Damage indicator, it isn't getting proper W and R damage, have to fix this
         {
             var dmg = 0d;
 
@@ -413,24 +409,18 @@ namespace Fiddlesticks
             return (float) dmg;
         }
 
-        public static void UseItems(Obj_AI_Base target)
+        public static void UseItems(Obj_AI_Base target) // Items using 
         {
             if (target == null)
             {
                 return;
             }
 
-            Int16[] targetedItems = {3188, 3153, 3144, 3128, 3146, 3184};
-            Int16[] nonTargetedItems = {3180, 3131, 3074, 3077, 3142};
+            Int16[] targetedItems = { 3128 }; // DFG 
 
             foreach (var itemId in targetedItems.Where(itemId => Items.HasItem(itemId) && Items.CanUseItem(itemId)))
             {
                 Items.UseItem(itemId, target);
-            }
-
-            foreach (var itemId in nonTargetedItems.Where(itemId => Items.HasItem(itemId) && Items.CanUseItem(itemId)))
-            {
-                Items.UseItem(itemId);
             }
         }
 
