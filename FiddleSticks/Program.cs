@@ -32,10 +32,6 @@ namespace Fiddlesticks
 
         private static void OnLoad(EventArgs args)
         {
-            if (Player.BaseSkinName != CharName)
-            {
-                return;
-            }
             Q = new Spell(SpellSlot.Q, 575);
             W = new Spell(SpellSlot.W, 575);
             E = new Spell(SpellSlot.E, 750);
