@@ -64,7 +64,7 @@ namespace Fiddlesticks
 
             if (IgniteSlot != SpellSlot.Unknown)
             {
-                Config.SubMenu("combo").AddItem(new MenuItem("autoIgnite", "Use Ignite with Burst").SetValue(true));
+                Config.SubMenu("misc").AddItem(new MenuItem("autoIgnite", "Auto ignite when killable").SetValue(true));
             }
 
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
@@ -128,7 +128,7 @@ namespace Fiddlesticks
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnGameUpdate += Game_OnGameUpdate;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
-
+            
             Game.PrintChat("<font color=\"#00BFFF\">Fiddlesticks# Beta -</font> <font color=\"#FFFFFF\">Loaded</font>");
         }
 
@@ -162,6 +162,24 @@ namespace Fiddlesticks
                     JungleClear();
                 }
             }
+
+            if (!Config.SubMenu("misc").Item("autoIgnite").GetValue<bool>())
+            {
+                return;
+            }
+
+            if (IgniteSlot == SpellSlot.Unknown ||
+                Player.Spellbook.CanUseSpell(IgniteSlot) != SpellState.Ready)
+            {
+                return;
+            }
+
+            if (!(Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) >= target.Health)) // Auto-ignite if killable
+            {
+                return;
+            }
+
+            Player.Spellbook.CastSpell(IgniteSlot, target);
         }
 
         private static void Drawing_OnDraw(EventArgs args) // Drawing
@@ -242,24 +260,6 @@ namespace Fiddlesticks
                     }
                 }
             }
-
-            if (!Config.Item("autoIgnite").GetValue<bool>())
-            {
-                return;
-            }
-
-            if (IgniteSlot == SpellSlot.Unknown ||
-                Player.Spellbook.CanUseSpell(IgniteSlot) != SpellState.Ready)
-            {
-                return;
-            }
-
-            if (!(Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) >= target.Health)) // Auto-ignite if killable
-            {
-                return;
-            }
-
-            Player.Spellbook.CastSpell(IgniteSlot, target);
 
             if (W.IsReady())
             {
