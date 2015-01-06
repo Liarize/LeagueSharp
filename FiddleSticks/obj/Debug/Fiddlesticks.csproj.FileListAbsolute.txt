@@ -1,1 +1,16 @@
 C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\Fiddlesticks.exe.config
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\Fiddlesticks.exe
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\Fiddlesticks.pdb
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\LeagueSharp.Common.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\LeagueSharp.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\SharpDX.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\SharpDX.Direct3D9.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\SharpDX.Toolkit.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\SharpDX.Toolkit.Graphics.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\clipper_library.dll
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\LeagueSharp.xml
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\SharpDX.Toolkit.xml
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\bin\Release\SharpDX.Toolkit.Graphics.xml
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\obj\Debug\Fiddlesticks.csprojResolveAssemblyReference.cache
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\obj\Debug\Fiddlesticks.exe
+C:\Users\Pepa\SkyDrive\Programování\LeagueSharp\GitHub\LeagueSharp\FiddleSticks\obj\Debug\Fiddlesticks.pdb

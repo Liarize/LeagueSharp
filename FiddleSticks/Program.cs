@@ -76,7 +76,6 @@ namespace Fiddlesticks
             //Farm Menu
             Config.AddSubMenu(new Menu("Farming Settings", "farm"));
             Config.SubMenu("farm").AddItem(new MenuItem("farmKey", "Farming Key").SetValue(new KeyBind("V".ToCharArray()[0], KeyBindType.Press)));
-            Config.SubMenu("farm").AddItem(new MenuItem("wFarm", "Farm with W").SetValue(true));
             Config.SubMenu("farm").AddItem(new MenuItem("eFarm", "Farm with E").SetValue(true));
             Config.SubMenu("farm").AddItem(new MenuItem("farmMana", "Min. Mana Percent: ").SetValue(new Slider(50)));
 
@@ -121,13 +120,13 @@ namespace Fiddlesticks
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
             
             //Announce that the assembly has been loaded
-            Game.PrintChat("<font color=\"#00BFFF\">Fiddlesticks# Beta -</font> <font color=\"#FFFFFF\">Loaded</font>");
+            Game.PrintChat("<font color=\"#00BFFF\">Fiddlesticks# -</font> <font color=\"#FFFFFF\">Loaded</font>");
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Select default target
-            var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
 
             // Keybinds
             var comboKey = Config.Item("comboKey").GetValue<KeyBind>().Active;
@@ -199,14 +198,13 @@ namespace Fiddlesticks
 
             foreach (var spell in Spells.Where(spell => Config.Item(spell.Slot + "Draw").GetValue<Circle>().Active))
             {
-                Utility.DrawCircle(Player.Position, spell.Range,
-                    Config.Item(spell.Slot + "Draw").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(Player.Position, spell.Range, Config.Item(spell.Slot + "Draw").GetValue<Circle>().Color);
             }
 
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             if (Config.Item("Target").GetValue<Circle>().Active && target != null)
             {
-                Utility.DrawCircle(target.Position, 50, Config.Item("Target").GetValue<Circle>().Color, 1, 50);
+                Render.Circle.DrawCircle(target.Position, 50, Config.Item("Target").GetValue<Circle>().Color);
             }
         }
 
@@ -234,12 +232,12 @@ namespace Fiddlesticks
                 return;
             }
             // Ultimate logic
-            if (Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true) == false))) // If target is not under turret -> Cast R
+            if ((Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true) == false)))) // If target is not under turret -> Cast R
             {
                 R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
-
-            if (Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true)) == false && (Config.Item("dive").GetValue<bool>()))) // If target is under turret and Turret dive is ON -> Dive with R
+            
+            if ((Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true)) == false && (Config.Item("dive").GetValue<bool>())))) // If target is under turret and Turret dive is ON -> Dive with R
             {
                 R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
@@ -248,32 +246,31 @@ namespace Fiddlesticks
             {
                 UseItems(target);
             }
-
             if (Config.Item("autoSmite").GetValue<bool>())
             {
                 if (SmiteSlot != SpellSlot.Unknown && Player.Spellbook.CanUseSpell(SmiteSlot) == SpellState.Ready)
                 {
                     if (Q.IsReady() && W.IsReady() && E.IsReady())
                     {
-                        Player.Spellbook.CastSpell(SmiteSlot, target);
+                        Player.Spellbook.CastSpell(SmiteSlot, target); 
                     }
                 }
             }
-                
-            if (Q.IsReady() && (Config.SubMenu("Combo").Item("useQ").GetValue<bool>()))
+            
+            if (Q.IsReady() && (Config.SubMenu("combo").Item("useQ").GetValue<bool>()))
             {
-                Q.CastOnUnit(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
+                Q.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
+            }
+            
+            if (E.IsReady() && (Config.SubMenu("combo").Item("useE").GetValue<bool>()))
+            {
+                E.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
             }
 
-            if (E.IsReady() && (Config.SubMenu("Combo").Item("useE").GetValue<bool>()))
+            if (W.IsReady() && (Config.SubMenu("combo").Item("useW").GetValue<bool>()))
             {
-                E.Cast(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
-            }
-
-            if (W.IsReady() && (Config.SubMenu("Combo").Item("useW").GetValue<bool>()))
-            {
-                W.CastOnUnit(target, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
-            }     
+                W.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
+            } 
         }
 
         //Harass
@@ -285,10 +282,8 @@ namespace Fiddlesticks
             }
 
             var mana = Player.MaxMana*(Config.Item("harassMana").GetValue<Slider>().Value/100.0); //Check if player has enough mana
-            if (!(Player.Mana > mana))
+            if ((Player.Mana > mana))
             {
-                return;
-            }
 
             var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex; //Select the Harass Mode
             switch (menuItem)
@@ -302,8 +297,8 @@ namespace Fiddlesticks
                 case 1: //2nd mode: Q and W
                     if (Q.IsReady() && W.IsReady())
                     {
-                        Q.Cast(target, Config.Item("usePackets").GetValue<bool>());
-                        W.Cast(target, Config.Item("usePackets").GetValue<bool>());
+                        Q.CastOnUnit(target, Config.Item("usePackets").GetValue<bool>());
+                        W.CastOnUnit(target, Config.Item("usePackets").GetValue<bool>());
                     }
                     break;
                 case 2: //3rd mode: Q, E and W
@@ -315,7 +310,9 @@ namespace Fiddlesticks
                     }
                     break;
             }
+            }
         }
+            
 
         //Farm
         private static void Farm()
@@ -344,21 +341,7 @@ namespace Fiddlesticks
                 }
             }
 
-            if (Config.Item("wFarm").GetValue<bool>() || !W.IsReady())
-            {
-                // Logic for getting killable minions, isn't working, idk why
-                foreach (
-                var minion in
-                    minions.Where(
-                        minion =>
-                            minion != null && minion.IsValidTarget(W.Range) &&
-                            HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion))) <=
-                            Player.GetSpellDamage(minion, SpellSlot.W)))
-            {
-                W.CastOnUnit(minion, Config.Item("usePackets").GetValue<bool>());
-                return;
-            }
-            }
+            
         }
 
         //Jungleclear
