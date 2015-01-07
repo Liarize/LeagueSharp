@@ -54,19 +54,7 @@ namespace Fiddlesticks
             Config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R in Combo").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Burst").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("beginwithR", "Begin combo with Ultimate").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("dive", "Dive under enemy turrets with Ultimate").SetValue(false));
-
-            if (SmiteSlot != SpellSlot.Unknown)
-            {
-                Config.SubMenu("combo").AddItem(new MenuItem("autoSmite", "Use Smite on Target if QWE Available").SetValue(true));
-            }
-
-            if (IgniteSlot != SpellSlot.Unknown)
-            {
-                Config.SubMenu("misc").AddItem(new MenuItem("autoIgnite", "Auto ignite when killable").SetValue(true));
-            }
+            Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Burst").SetValue(true)); 
 
             //Harass Menu
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
@@ -97,6 +85,16 @@ namespace Fiddlesticks
             Config.AddSubMenu(new Menu("Misc Settings", "misc"));
             Config.SubMenu("misc").AddItem(new MenuItem("stopChannel", "Interrupt Channeling Spells").SetValue(true));
             Config.SubMenu("misc").AddItem(new MenuItem("usePackets", "Use Packets to Cast Spells").SetValue(false));
+
+            if (SmiteSlot != SpellSlot.Unknown)
+            {
+                Config.SubMenu("combo").AddItem(new MenuItem("autoSmite", "Use Smite on Target if QWE Available").SetValue(true));
+            }
+
+            if (IgniteSlot != SpellSlot.Unknown)
+            {
+                Config.SubMenu("misc").AddItem(new MenuItem("autoIgnite", "Auto ignite when killable").SetValue(true));
+            }
 
             //Orbwalker Menu
             Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
@@ -159,11 +157,13 @@ namespace Fiddlesticks
             //W cancel fix for Orbwalker
             if (Player.HasBuff("Drain"))
             {
+                //Evade.Enabled(false);
                 Orbwalker.SetMovement(false);
                 Orbwalker.SetAttack(false);
             }
             if (!Player.HasBuff("Drain"))
             {
+                //Evade.Enabled(true);
                 Orbwalker.SetMovement(true);
                 Orbwalker.SetAttack(true);
             }
@@ -231,32 +231,13 @@ namespace Fiddlesticks
             {
                 return;
             }
-            // Ultimate logic
-            /*if ((Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true) == false)))) // If target is not under turret -> Cast R
+
+            if (R.IsReady() && Config.Item("useR").GetValue<bool>())
+
             {
                 R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
             
-            if ((Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true)) == false && (Config.Item("dive").GetValue<bool>())))) // If target is under turret and Turret dive is ON -> Dive with R
-            {
-                R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
-            }
-
-            if (Config.SubMenu("Combo").Item("comboItems").GetValue<bool>())
-            {
-                UseItems(target);
-            }
-            if (Config.Item("autoSmite").GetValue<bool>())
-            {
-                if (SmiteSlot != SpellSlot.Unknown && Player.Spellbook.CanUseSpell(SmiteSlot) == SpellState.Ready)
-                {
-                    if (Q.IsReady() && W.IsReady() && E.IsReady())
-                    {
-                        Player.Spellbook.CastSpell(SmiteSlot, target); 
-                    }
-                }
-            }
-            */
             if (Q.IsReady() && (Config.SubMenu("combo").Item("useQ").GetValue<bool>()))
             {
                 Q.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
@@ -270,7 +251,23 @@ namespace Fiddlesticks
             if (W.IsReady() && (Config.SubMenu("combo").Item("useW").GetValue<bool>()))
             {
                 W.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
-            } 
+            }
+
+            /*if (Config.SubMenu("Combo").Item("comboItems").GetValue<bool>())
+            {
+                UseItems(target);
+            }
+
+            if (Config.Item("autoSmite").GetValue<bool>())
+            {
+                if (SmiteSlot != SpellSlot.Unknown && Player.Spellbook.CanUseSpell(SmiteSlot) == SpellState.Ready)
+                {
+                    if (Q.IsReady() && W.IsReady() && E.IsReady())
+                    {
+                        Player.Spellbook.CastSpell(SmiteSlot, target);
+                    }
+                }
+            }*/
         }
 
         //Harass
@@ -347,7 +344,7 @@ namespace Fiddlesticks
         //Jungleclear
         private static void JungleClear() 
         {
-
+            // Get mobs in range, try to order them by max health to get the big ones
             var mobs = MinionManager.GetMinions(Player.ServerPosition, W.Range, MinionTypes.All,
                 MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
             if (mobs.Count <= 0)
@@ -355,7 +352,7 @@ namespace Fiddlesticks
                 return;
             }
 
-            var mob = mobs[0]; // Idk what this is for :DD
+            var mob = mobs[0];
             if (mob == null)
             {
                 return;
