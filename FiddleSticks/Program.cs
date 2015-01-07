@@ -232,7 +232,7 @@ namespace Fiddlesticks
                 return;
             }
             // Ultimate logic
-            if ((Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true) == false)))) // If target is not under turret -> Cast R
+            /*if ((Config.SubMenu("Combo").Item("beginwithR").GetValue<bool>() && (Config.SubMenu("Combo").Item("useR").GetValue<bool>() && (R.IsReady()) && (Utility.UnderTurret(target, true) == false)))) // If target is not under turret -> Cast R
             {
                 R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
@@ -256,7 +256,7 @@ namespace Fiddlesticks
                     }
                 }
             }
-            
+            */
             if (Q.IsReady() && (Config.SubMenu("combo").Item("useQ").GetValue<bool>()))
             {
                 Q.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
