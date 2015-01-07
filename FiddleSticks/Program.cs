@@ -46,6 +46,15 @@ namespace Fiddlesticks
             Spells.Add(R);
 
             Config = new Menu(CharName, CharName, true);
+
+            //Orbwalker Menu
+            Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
+            Orbwalker = new Orbwalking.Orbwalker(Config.SubMenu("Orbwalking"));
+
+            //TargetSelector Menu
+            var tsMenu = new Menu("Target Selector", "Target Selector");
+            TargetSelector.AddToMenu(tsMenu);
+            Config.AddSubMenu(tsMenu);
             
             //Combo Menu
             Config.AddSubMenu(new Menu("Combo Settings", "combo"));
@@ -54,7 +63,8 @@ namespace Fiddlesticks
             Config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R in Combo").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Burst").SetValue(true)); 
+            Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Burst").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("KillSteal", "Auto KS with Spells").SetValue(true));
 
             //Harass Menu
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
@@ -94,16 +104,7 @@ namespace Fiddlesticks
             if (IgniteSlot != SpellSlot.Unknown)
             {
                 Config.SubMenu("misc").AddItem(new MenuItem("autoIgnite", "Auto ignite when killable").SetValue(true));
-            }
-
-            //Orbwalker Menu
-            Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
-            Orbwalker = new Orbwalking.Orbwalker(Config.SubMenu("Orbwalking"));
-
-            //TargetSelector Menu
-            var tsMenu = new Menu("Target Selector", "Target Selector");
-            TargetSelector.AddToMenu(tsMenu);
-            Config.AddSubMenu(tsMenu);
+            }    
 
             //Make menu visible
             Config.AddToMainMenu();
@@ -135,6 +136,7 @@ namespace Fiddlesticks
             if (comboKey && target != null) 
             {
                 Combo(target);
+                KillSteal();
             }
             else
             {
@@ -224,6 +226,33 @@ namespace Fiddlesticks
             Q.CastOnUnit(unit, Config.Item("usePackets").GetValue<bool>());
         }
 
+        // Killsteal
+        private static void KillSteal()
+        {
+            foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy && !x.IsDead))
+            {
+                if (enemy.IsValidTarget(Q.Range) && enemy.IsVisible)
+                {
+                    var eDmg = E.GetDamage(enemy);
+                    var wDmg = W.GetDamage(enemy);
+
+                    if (enemy.Health <= eDmg)
+                    {
+                        E.Cast(enemy);
+                    }
+                    else if (enemy.Health <= wDmg)
+                    {
+                        W.Cast(enemy);
+                    }
+                    else if (enemy.Health <= eDmg + wDmg)
+                    {
+                        E.Cast(enemy);
+                        W.Cast(enemy);
+                    }
+                }
+            }
+        }
+
         //Combo
         private static void Combo(Obj_AI_Base target)
         {
@@ -233,11 +262,10 @@ namespace Fiddlesticks
             }
 
             if (R.IsReady() && Config.Item("useR").GetValue<bool>())
-
             {
                 R.Cast(target.ServerPosition, Config.SubMenu("Misc").Item("usePackets").GetValue<bool>());
             }
-            
+ 
             if (Q.IsReady() && (Config.SubMenu("combo").Item("useQ").GetValue<bool>()))
             {
                 Q.CastOnUnit(target, Config.SubMenu("misc").Item("usePackets").GetValue<bool>());
@@ -269,7 +297,7 @@ namespace Fiddlesticks
                 }
             }*/
         }
-
+     
         //Harass
         private static void Harass(Obj_AI_Base target)
         {
