@@ -25,6 +25,11 @@ namespace Fiddlesticks
         public static Menu Config;
         public static Obj_AI_Hero Player = ObjectManager.Player;
 
+        // Items
+        public static Items.Item biscuit = new Items.Item(2010, 10);
+        public static Items.Item HPpot = new Items.Item(2003, 10);
+        public static Items.Item Flask = new Items.Item(2041, 10);
+
         private static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += OnLoad;
@@ -85,7 +90,7 @@ namespace Fiddlesticks
 
             //Drawing Menu
             Config.AddSubMenu(new Menu("Draw Settings", "drawing"));
-            Config.SubMenu("drawing").AddItem(new MenuItem("mDraw", "Disable All Range Draws").SetValue(false));
+            Config.SubMenu("drawing").AddItem(new MenuItem("mDraw", "Disable all drawings").SetValue(false));
             Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Draw Circle on Target").SetValue(new Circle(true,Color.FromArgb(255, 255, 0, 0))));
             Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q Range").SetValue(new Circle(true,Color.FromArgb(255, 178, 0, 0))));
             Config.SubMenu("drawing").AddItem(new MenuItem("WDraw", "Draw W Range").SetValue(new Circle(false,Color.FromArgb(255, 32, 178, 170))));
@@ -94,7 +99,17 @@ namespace Fiddlesticks
             //Misc Menu
             Config.AddSubMenu(new Menu("Misc Settings", "misc"));
             Config.SubMenu("misc").AddItem(new MenuItem("stopChannel", "Interrupt Channeling Spells").SetValue(true));
+            Config.SubMenu("misc").AddItem(new MenuItem("gapcloser", "Interrupt Gapclosers").SetValue(true));
             Config.SubMenu("misc").AddItem(new MenuItem("usePackets", "Use Packets to Cast Spells").SetValue(false));
+            Config.SubMenu("misc").AddItem(new MenuItem("autolvlup", "").SetValue(new StringList(new[] { "W->E->Q", "Q>W>E(2E)" }, 0)));
+
+            //AutoPots menu
+            Config.AddSubMenu(new Menu("AutoPot", "AutoPot"));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H", "Health Pot").SetValue(true));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_M", "Mana Pot").SetValue(true));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H_Per", "Health Pot %").SetValue(new Slider(35, 1)));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H_Per", "Mana Pot %").SetValue(new Slider(35, 1)));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_Ign", "Auto pot when ignite").SetValue(true));
 
             if (SmiteSlot != SpellSlot.Unknown)
             {
@@ -117,6 +132,7 @@ namespace Fiddlesticks
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnGameUpdate += Game_OnGameUpdate;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
+            AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             
             //Announce that the assembly has been loaded
             Game.PrintChat("<font color=\"#00BFFF\">Fiddlesticks# -</font> <font color=\"#FFFFFF\">Loaded</font>");
@@ -133,6 +149,18 @@ namespace Fiddlesticks
             var farmKey = Config.Item("farmKey").GetValue<KeyBind>().Active;
             var jungleClearKey = Config.Item("jungleKey").GetValue<KeyBind>().Active;
 
+            // AutoPot
+            if (Config.SubMenu("Misc").Item("AutoPot").GetValue<bool>())
+            {
+                AutoPot();
+            }
+
+            if (Config.SubMenu("misc").Item("autoIgnite").GetValue<bool>() && target  != null)
+            {
+                Autoignite(target);
+            }
+
+            // Main Features
             if (comboKey && target != null) 
             {
                 Combo(target);
@@ -169,13 +197,54 @@ namespace Fiddlesticks
                 Orbwalker.SetMovement(true);
                 Orbwalker.SetAttack(true);
             }
+            
+        }
 
-            //Autoignite
-            if (!Config.SubMenu("misc").Item("autoIgnite").GetValue<bool>()) //Check if Auto-Ignite is enabled
+        //Drawing
+        private static void Drawing_OnDraw(EventArgs args)
+        {
+            if (Config.Item("mDraw").GetValue<bool>())
             {
                 return;
             }
 
+            //Killability
+            /*
+            foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy && !x.IsDead))
+            {
+                if (enemy.IsVisible)
+                {
+                    var dmg = ComboDamage(enemy);
+                    if (enemy.Health < dmg)
+                    {
+                        Render.Text text = new Render.Text("Killable", 28, SharpDX.Color.Blue);
+                    }
+                    else if (enemy.Health <= dmg)
+                    {
+                        Render.Text text = new Render.Text(new Vector2(0, 0), "Almost Killable", 28, SharpDX.Color.Orange);
+                    }
+                    else if (enemy.Health > dmg)
+                    {
+                        Render.Text text = new Render.Text(new Vector2(0, 0), "Not Killable", 28, SharpDX.Color.Red);
+                    }
+                }
+            }
+             */
+            foreach (var spell in Spells.Where(spell => Config.Item(spell.Slot + "Draw").GetValue<Circle>().Active))
+            {
+                Render.Circle.DrawCircle(Player.Position, spell.Range, Config.Item(spell.Slot + "Draw").GetValue<Circle>().Color);
+            }
+
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            if (Config.Item("Target").GetValue<Circle>().Active && target != null)
+            {
+                Render.Circle.DrawCircle(target.Position, 50, Config.Item("Target").GetValue<Circle>().Color);
+            }
+        }
+
+        // Auto Ignite
+        private static void Autoignite(Obj_AI_Base target)
+        {
             if (IgniteSlot == SpellSlot.Unknown ||
                 Player.Spellbook.CanUseSpell(IgniteSlot) != SpellState.Ready) //Check if Ignite is present and ready
             {
@@ -190,23 +259,17 @@ namespace Fiddlesticks
             Player.Spellbook.CastSpell(IgniteSlot, target);
         }
 
-        //Drawing
-        private static void Drawing_OnDraw(EventArgs args)
+        // Anti Gapcloser
+       private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
-            if (Config.Item("mDraw").GetValue<bool>())
+            if (!Config.Item("gapcloser").GetValue<bool>())
             {
                 return;
             }
-
-            foreach (var spell in Spells.Where(spell => Config.Item(spell.Slot + "Draw").GetValue<Circle>().Active))
+           
+            if (gapcloser.Sender.IsValidTarget(Q.Range))
             {
-                Render.Circle.DrawCircle(Player.Position, spell.Range, Config.Item(spell.Slot + "Draw").GetValue<Circle>().Color);
-            }
-
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            if (Config.Item("Target").GetValue<Circle>().Active && target != null)
-            {
-                Render.Circle.DrawCircle(target.Position, 50, Config.Item("Target").GetValue<Circle>().Color);
+                Q.CastOnUnit(gapcloser.Sender, Config.Item("usePackets").GetValue<bool>());
             }
         }
 
@@ -218,12 +281,10 @@ namespace Fiddlesticks
                 return;
             }
 
-            if (!(Player.Distance(unit) <= Q.Range) || !Q.IsReady())
+            if ((Player.Distance(unit.Position) <= Q.Range) && Q.IsReady())
             {
-                return;
-            }
-
-            Q.CastOnUnit(unit, Config.Item("usePackets").GetValue<bool>());
+                Q.CastOnUnit(unit, Config.Item("usePackets").GetValue<bool>());
+            }           
         }
 
         // Killsteal
@@ -252,6 +313,46 @@ namespace Fiddlesticks
                 }
             }
         }
+
+        // Auto HP pot
+        private static void AutoPot()
+        {
+            if (Config.SubMenu("AutoPot").Item("AP_Ign").GetValue<bool>())
+            if (Player.HasBuff("summonerdot") || Player.HasBuff("MordekaiserChildrenOfTheGrave"))
+            {
+                if (!Player.InFountain())
+
+                    if (Items.HasItem(biscuit.Id) && Items.CanUseItem(biscuit.Id) && !Player.HasBuff("ItemMiniRegenPotion"))
+                    {
+                        biscuit.Cast(Player);
+                    }
+                    else if (Items.HasItem(HPpot.Id) && Items.CanUseItem(HPpot.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("Health Potion"))
+                    {
+                        HPpot.Cast(Player);
+                    }
+                    else if (Items.HasItem(Flask.Id) && Items.CanUseItem(Flask.Id) && !Player.HasBuff("ItemCrystalFlask"))
+                    {
+                        Flask.Cast(Player);
+                    }
+            }
+
+            if (ObjectManager.Player.HasBuff("Recall") || Player.InFountain() && Player.InShop())
+            {
+                return;
+            }
+
+            //Health Pots
+            if (Player.Health/100 <= Config.Item("AP_H_Per").GetValue<Slider>().Value && !Player.HasBuff("RegenerationPotion", true))
+            {
+               Items.UseItem(2003);
+            }
+            //Mana Pots
+            if (Player.Health/100 <= Config.Item("A_M_Per").GetValue<Slider>().Value && !Player.HasBuff("FlaskOfCrystalWater", true))
+            {
+                Items.UseItem(2004);
+            }
+        }
+
 
         //Combo
         private static void Combo(Obj_AI_Base target)
@@ -358,7 +459,7 @@ namespace Fiddlesticks
                     minions.Where(
                         minion =>
                             minion != null && minion.IsValidTarget(E.Range) &&
-                            HealthPrediction.GetHealthPrediction(minion, (int)(Player.Distance(minion))) <=
+                            HealthPrediction.GetHealthPrediction(minion, (int)(Player.Distance(minion.Position))) <=
                             Player.GetSpellDamage(minion, SpellSlot.E)))
                 {
                     E.CastOnUnit(minion, Config.Item("usePackets").GetValue<bool>());
