@@ -27,10 +27,13 @@ namespace Katarina
         public static Menu Config;
         public static Obj_AI_Hero Player = ObjectManager.Player;
 
+        //E Cast
+        private static long dtLastECast = 0;
+
         //Packet casting
         public static bool packetCast;
 
-        // Items
+        //Items
         public static Items.Item biscuit = new Items.Item(2010, 10);
         public static Items.Item HPpot = new Items.Item(2003, 10);
         public static Items.Item Flask = new Items.Item(2041, 10);
@@ -74,10 +77,13 @@ namespace Katarina
             Config.AddSubMenu(new Menu("Smart Combo Settings", "combo"));
             Config.SubMenu("combo").AddItem(new MenuItem("smartR", "Use Smart R").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useItems", "Use Items with Burst").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("wjCombo", "Use WardJump in Combo").SetValue(true));
+            
 
             //Killsteal
             Config.AddSubMenu(new Menu("Killsteal Settings", "KillSteal"));
-            Config.SubMenu("combo").AddItem(new MenuItem("KillSteal", "Smart Killsteal enabled").SetValue(true)); 
+            Config.SubMenu("combo").AddItem(new MenuItem("KillSteal", "Smart Killsteal enabled").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("wjKS", "Use WardJump/Jump in KillSteal").SetValue(true));
 
             //Harass Menu
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
@@ -87,7 +93,9 @@ namespace Katarina
             //Farm
             Config.AddSubMenu(new Menu("Farming Settings", "farm"));
             Config.SubMenu("farm").AddItem(new MenuItem("smartFarm", "Use Smart Farm").SetValue(true));
-
+            Config.SubMenu("jungle").AddItem(new MenuItem("qFarm", "Farm with Q").SetValue(true));
+            Config.SubMenu("jungle").AddItem(new MenuItem("wFarm", "Farm with W").SetValue(true));
+            Config.SubMenu("jungle").AddItem(new MenuItem("eFarm", "Farm with E").SetValue(true));
 
             //Jungle Clear Menu
             Config.AddSubMenu(new Menu("Jungle Clear Settings", "jungle"));
@@ -108,6 +116,13 @@ namespace Katarina
             Config.AddSubMenu(new Menu("Misc Settings", "misc"));
             Config.SubMenu("misc").AddItem(new MenuItem("usePackets", "Use Packets to Cast Spells").SetValue(false));
             Config.SubMenu("misc").AddItem(new MenuItem("autolvlup", "Auto Level Spells").SetValue(new StringList(new[] { "W->E->Q", "Q>W>E" }, 0)));
+            Config.SubMenu("misc").AddItem(new MenuItem("PlayLegit", "Legit E").SetValue(false));
+            Config.SubMenu("misc").AddItem(new MenuItem("LegitCastDelay", "Legit E Delay").SetValue(new Slider(1000, 0, 2000)));
+
+            //Wardjump Menu
+            Config.AddSubMenu(new Menu("WardJump Settings", "wardjump"));
+            Config.SubMenu("misc").AddItem(new MenuItem("wardjumpkey", "WardJump key").SetValue(false));
+            Config.SubMenu("misc").AddItem(new MenuItem("wjpriority", "Wardjump priority").SetValue(new StringList(new[] { "Coming", "Soon" }, 0)));
 
             //AutoPots menu
             Config.AddSubMenu(new Menu("AutoPot", "AutoPot"));
@@ -142,6 +157,7 @@ namespace Katarina
 
             // Keybinds
             var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
+            var wardjumpKey = Config.Item("wardjumpkey").GetValue<KeyBind>().Active;
 
             //Ultimate fix
             if (ObjectManager.Player.IsDead) return;
@@ -155,6 +171,12 @@ namespace Katarina
             {
                 Orbwalker.SetAttack(true);
                 Orbwalker.SetMovement(true);
+            }
+
+            // WardJump
+            if (wardjumpKey != null)
+            {
+                //wardjump();
             }
 
             // AutoPot
@@ -193,6 +215,27 @@ namespace Katarina
                     break;
                 default:
                     break;
+            }
+        }
+
+        //E Humanizer
+        public static void CastE(Obj_AI_Base unit)
+        {
+            var PlayLegit = Config.Item("PlayLegit").GetValue<bool>();
+            var LegitCastDelay = Config.Item("LegitCastDelay").GetValue<Slider>().Value;
+
+            if (PlayLegit)
+            {
+                if (Environment.TickCount > dtLastECast + LegitCastDelay)
+                {
+                    E.CastOnUnit(unit, packetCast);
+                    dtLastECast = Environment.TickCount;
+                }
+            }
+            else
+            {
+                E.CastOnUnit(unit, packetCast);
+                dtLastECast = Environment.TickCount;
             }
         }
 
@@ -235,6 +278,35 @@ namespace Katarina
             }
         }
 
+        //JumpKS
+        /*
+        private void JumpKs(Obj_AI_Hero hero)
+        {
+            foreach (Obj_AI_Minion ward in ObjectManager.Get<Obj_AI_Minion>().Where(ward =>
+                E.IsReady() && Q.IsReady() && ward.Name.ToLower().Contains("ward") &&
+                ward.Distance(hero.ServerPosition) < Q.Range && ward.Distance(Player) < E.Range))
+            {
+                E.Cast(ward);
+                return;
+            }
+
+            foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>().Where(jumph =>
+                E.IsReady() && Q.IsReady() && jumph.Distance(hero.ServerPosition) < Q.Range &&
+                jumph.Distance(Player) < E.Range && jumph.IsValidTarget(E.Range)))
+            {
+                E.Cast(jumph);
+                return;
+            }
+
+            foreach (Obj_AI_Minion minion in ObjectManager.Get<Obj_AI_Minion>().Where(jumpm =>
+                E.IsReady() && Q.IsReady() && jumpm.Distance(hero.ServerPosition) < Q.Range &&
+                jumpm.Distance(Player) < E.Range && jumpm.IsValidTarget(E.Range)))
+            {
+                E.Cast(jumpm);
+                return;
+            }
+        }
+         */
         //Killsteal
         private static void KillSteal()
         {
@@ -282,40 +354,47 @@ namespace Katarina
                     E.Cast(hero, packetCast);
                 }
                 // Q
-                if (hero.Health - Qdmg < 0 && Q.IsReady() && Q.IsInRange(hero))
+                if (hero.Health - Qdmg < 0 && Q.IsReady() && Q.IsInRange(hero))                   
                 {
                     Q.Cast(hero, packetCast);
                 }
+            /*  else if (Q.IsReady() && E.IsReady() && Player.Distance(hero.ServerPosition) <= 1375 &&
+                            Config.Item("jumpKs", true).GetValue<bool>())
+                    {
+                        JumpKs(hero);
+                        Q.Cast(hero, packetCast);
+                        return;
+                    } */
                 // E + W
                 if (hero.Health - Edmg - Wdmg < 0 && E.IsReady() && W.IsReady())
                 {
-                    E.Cast(hero, packetCast);
+                    CastE(hero);
                     W.Cast(packetCast);
                 }
                 // E + Q
                 if (hero.Health - Edmg - Qdmg < 0 && E.IsReady() && Q.IsReady())
                 {
-                    E.Cast(hero, packetCast);
+                    CastE(hero);
                     Q.Cast(hero, packetCast);
                 }
                 // E + Q + W (don't proc Mark)
                 if (hero.Health - Edmg - Wdmg - Qdmg < 0 && E.IsReady() && Q.IsReady() && W.IsReady())
                 {
-                    E.Cast(hero, packetCast);
+                    CastE(hero);
                     Q.Cast(hero, packetCast);
                     W.Cast(packetCast);
                 }
                 // E + Q + W + Mark
                 if (hero.Health - Edmg - Wdmg - Qdmg - MarkDmg < 0 && E.IsReady() && Q.IsReady() && W.IsReady())
                 {
-                    E.Cast(hero, packetCast);
+                    CastE(hero);
                     Q.Cast(hero, packetCast);
                     W.Cast(packetCast);
                 }
                 // E + Q + W + Ignite
                 if (hero.Health - Edmg - Wdmg - Qdmg - Ignitedmg < 0 && E.IsReady() && Q.IsReady() && W.IsReady() && IgniteSlot.IsReady())
                 {
-                    E.Cast(hero, packetCast);
+                    CastE(hero);
                     Q.Cast(hero, packetCast);
                     W.Cast(packetCast);
                     Player.Spellbook.CastSpell(IgniteSlot, hero);
@@ -360,34 +439,34 @@ namespace Katarina
                     //Q
                     if (focus.Health - Qdmg < 0 && E.IsReady() && Q.IsReady() && focus.Distance(target.ServerPosition) <= Q.Range)
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                         Q.Cast(focus, packetCast);
                     }
                     // Q + W
                     if (focus.Distance(target.ServerPosition) <= W.Range && focus.Health - Qdmg - Wdmg < 0 && E.IsReady() && Q.IsReady()) 
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                         Q.Cast(focus, packetCast);
                         W.Cast(packetCast);
                     }
                     // Q + W + Mark
                     if (focus.Distance(target.ServerPosition) <= W.Range && focus.Health - Qdmg - Wdmg - MarkDmg < 0 && E.IsReady() && Q.IsReady() && W.IsReady())
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                         Q.Cast(focus, packetCast);
                         W.Cast(packetCast);
                     }
                     // Q + Ignite
                     if (focus.Distance(target.ServerPosition) <= 600 && focus.Health - Qdmg - Ignitedmg < 0 && E.IsReady() && Q.IsReady() && IgniteSlot.IsReady())
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                         Q.Cast(focus, packetCast);
                         Player.Spellbook.CastSpell(IgniteSlot, focus);
                     }
                     // Q + W + Ignite
                     if (focus.Distance(target.ServerPosition) <= W.Range && focus.Health - Qdmg - Wdmg - Ignitedmg < 0 && E.IsReady() && Q.IsReady() && W.IsReady() && IgniteSlot.IsReady())
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                         Q.Cast(focus, packetCast);
                         W.Cast(packetCast);
                         Player.Spellbook.CastSpell(IgniteSlot, focus);
@@ -455,7 +534,7 @@ namespace Katarina
                     }
                     if (E.IsReady())
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                     }
                 }
 
@@ -464,7 +543,7 @@ namespace Katarina
                 {
                     if (E.IsReady())
                     {
-                        E.Cast(target, packetCast);
+                        CastE(target);
                     }
                     if (Q.IsReady())
                     {
@@ -540,7 +619,7 @@ namespace Katarina
                     if (Q.IsReady() && W.IsReady() && E.IsReady())
                     {
                         Q.Cast(target, packetCast);
-                        E.Cast(target, packetCast);  
+                        CastE(target);  
                         W.Cast(target, packetCast);
                         return;
                     }
@@ -562,41 +641,41 @@ namespace Katarina
                     var MarkDmg = Damage.CalcDamage(Player, minion, Damage.DamageType.Magical, Player.FlatMagicDamageMod * 0.15 + Player.Level * 15);
 
                     //Killable with Q
-                    if (minion.Health - Qdmg <= 0 && minion.Distance(Player.ServerPosition) <= Q.Range && Q.IsReady())
+                    if (minion.Health - Qdmg <= 0 && minion.Distance(Player.ServerPosition) <= Q.Range && Q.IsReady() && (Config.Item("wFarm").GetValue<bool>()))
                     {
                         Q.Cast(minion, packetCast); 
                     }
 
                     //Killable with W
-                    if (minion.Health - Wdmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && W.IsReady())
+                    if (minion.Health - Wdmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && W.IsReady() && (Config.Item("wFarm").GetValue<bool>()))
                     { 
                         W.Cast(packetCast); 
                     }
 
                     //Killable with E
-                    if (minion.Health - Edmg <= 0 && minion.Distance(Player.ServerPosition) <= E.Range && E.IsReady())
+                    if (minion.Health - Edmg <= 0 && minion.Distance(Player.ServerPosition) <= E.Range && E.IsReady() && (Config.Item("eFarm").GetValue<bool>()))
                     {
-                        E.Cast(minion, packetCast);
+                        CastE(minion);
                     }
 
                     //Killable with Q and W
-                    if (minion.Health - Wdmg - Qdmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && Q.IsReady() && W.IsReady()) 
+                    if (minion.Health - Wdmg - Qdmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && Q.IsReady() && W.IsReady() && (Config.Item("qFarm").GetValue<bool>()) && (Config.Item("wFarm").GetValue<bool>())) 
                     { 
                         Q.Cast(minion, packetCast);
                         W.Cast(packetCast); 
                     }
 
                     //Killable with Q, W and Mark
-                    if (minion.Health - Wdmg - Qdmg - MarkDmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && Q.IsReady() && W.IsReady())
+                    if (minion.Health - Wdmg - Qdmg - MarkDmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && Q.IsReady() && W.IsReady() && (Config.Item("qFarm").GetValue<bool>()) && (Config.Item("wFarm").GetValue<bool>()))
                     {
                         Q.Cast(minion, packetCast);
                         W.Cast(packetCast);
                     }
 
                     //Killable with Q, W, E and Mark
-                    if (minion.Health - Wdmg - Qdmg - MarkDmg - Edmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && E.IsReady() && Q.IsReady() && W.IsReady())
+                    if (minion.Health - Wdmg - Qdmg - MarkDmg - Edmg <= 0 && minion.Distance(Player.ServerPosition) <= W.Range && E.IsReady() && Q.IsReady() && W.IsReady() && (Config.Item("qFarm").GetValue<bool>()) && (Config.Item("wFarm").GetValue<bool>()) && (Config.Item("eFarm").GetValue<bool>()))
                     {
-                        E.Cast(minion, packetCast);
+                        CastE(minion);
                         Q.Cast(minion, packetCast);
                         W.Cast(packetCast);
                     }
