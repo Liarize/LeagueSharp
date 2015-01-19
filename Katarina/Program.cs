@@ -45,7 +45,7 @@ namespace Katarina
 
         private static void OnLoad(EventArgs args)
         {
-            if (ObjectManager.Player.ChampionName != CharName) return;
+            //if (ObjectManager.Player.ChampionName != CharName) return;
 
             Q = new Spell(SpellSlot.Q, 675f);
             W = new Spell(SpellSlot.W, 375f);
