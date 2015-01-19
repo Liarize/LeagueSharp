@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Katarina
 {
-    internal class Program
+    class Program
     {
         public const string CharName = "Katarina";
         public static bool InUlt = false;
@@ -22,8 +22,7 @@ namespace Katarina
         public static Spell E;
         public static Spell R;
         public static SpellSlot IgniteSlot;
-        public static SpellSlot SmiteSlot;
-        private static Items.Item DFG;
+        public static Items.Item DFG;
         public static Menu Config;
         public static Obj_AI_Hero Player = ObjectManager.Player;
 
@@ -52,8 +51,6 @@ namespace Katarina
             E = new Spell(SpellSlot.E, 700f);
             R = new Spell(SpellSlot.R, 550f);
 
-            packetCast = Config.Item("usePackets").GetValue<bool>();
-
             IgniteSlot = Player.GetSpellSlot("summonerdot");
             DFG = new Items.Item((int)ItemId.Deathfire_Grasp, 750f);
 
@@ -62,7 +59,7 @@ namespace Katarina
             Spells.Add(E);
             Spells.Add(R);
 
-            Config = new Menu(CharName, CharName, true);
+            Config = new Menu(CharName, CharName, true);      
 
             //Orbwalker Menu
             Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
@@ -133,10 +130,12 @@ namespace Katarina
             if (IgniteSlot != SpellSlot.Unknown)
             {
                 Config.SubMenu("misc").AddItem(new MenuItem("autoIgnite", "Auto ignite when killable").SetValue(true));
-            }    
+            }
 
             //Make menu visible
             Config.AddToMainMenu();
+
+            packetCast = Config.Item("usePackets").GetValue<bool>();
 
             //Damage Drawer
             Utility.HpBarDamageIndicator.DamageToUnit = ComboDamage;
@@ -174,10 +173,10 @@ namespace Katarina
             }
 
             // WardJump
-            if (wardjumpKey != null)
-            {
+           // if (wardjumpKey != null)
+            //{
                 //wardjump();
-            }
+            //}
 
             // AutoPot
             if (Config.Item("AutoPot").GetValue<bool>())
