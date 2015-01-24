@@ -2,9 +2,9 @@
 
 using LeagueSharp;
 using LeagueSharp.Common;
+using SharpDX;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 
 #endregion
@@ -44,12 +44,15 @@ namespace Katarina
 
         private static void OnLoad(EventArgs args)
         {
-            //if (ObjectManager.Player.ChampionName != CharName) return;
+            if (ObjectManager.Player.ChampionName != CharName)
+            {
+                return;
+            }
 
-            Q = new Spell(SpellSlot.Q, 675f);
-            W = new Spell(SpellSlot.W, 375f);
-            E = new Spell(SpellSlot.E, 700f);
-            R = new Spell(SpellSlot.R, 550f);
+            Q = new Spell(SpellSlot.Q, 675);
+            W = new Spell(SpellSlot.W, 375);
+            E = new Spell(SpellSlot.E, 700);
+            R = new Spell(SpellSlot.R, 550);
 
             IgniteSlot = Player.GetSpellSlot("summonerdot");
             DFG = new Items.Item((int)ItemId.Deathfire_Grasp, 750f);
@@ -75,12 +78,12 @@ namespace Katarina
             Config.SubMenu("combo").AddItem(new MenuItem("smartR", "Use Smart R").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useItems", "Use Items with Burst").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("wjCombo", "Use WardJump in Combo").SetValue(true));
-            
 
             //Killsteal
             Config.AddSubMenu(new Menu("Killsteal Settings", "KillSteal"));
-            Config.SubMenu("combo").AddItem(new MenuItem("KillSteal", "Smart Killsteal enabled").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("wjKS", "Use WardJump/Jump in KillSteal").SetValue(true));
+            Config.SubMenu("KillSteal").AddItem(new MenuItem("KillSteal", "Smart Killsteal enabled").SetValue(true));
+            Config.SubMenu("KillSteal").AddItem(new MenuItem("wjKS", "Use WardJump in KillSteal").SetValue(true));
+            Config.SubMenu("KillSteal").AddItem(new MenuItem("jumpsS", "Use E jumping in KillSteal").SetValue(true));
 
             //Harass Menu
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
@@ -90,9 +93,9 @@ namespace Katarina
             //Farm
             Config.AddSubMenu(new Menu("Farming Settings", "farm"));
             Config.SubMenu("farm").AddItem(new MenuItem("smartFarm", "Use Smart Farm").SetValue(true));
-            Config.SubMenu("jungle").AddItem(new MenuItem("qFarm", "Farm with Q").SetValue(true));
-            Config.SubMenu("jungle").AddItem(new MenuItem("wFarm", "Farm with W").SetValue(true));
-            Config.SubMenu("jungle").AddItem(new MenuItem("eFarm", "Farm with E").SetValue(true));
+            Config.SubMenu("farm").AddItem(new MenuItem("qFarm", "Farm with Q").SetValue(true));
+            Config.SubMenu("farm").AddItem(new MenuItem("wFarm", "Farm with W").SetValue(true));
+            Config.SubMenu("farm").AddItem(new MenuItem("eFarm", "Farm with E").SetValue(true));
 
             //Jungle Clear Menu
             Config.AddSubMenu(new Menu("Jungle Clear Settings", "jungle"));
@@ -103,11 +106,11 @@ namespace Katarina
             //Drawing Menu
             Config.AddSubMenu(new Menu("Draw Settings", "drawing"));
             Config.SubMenu("drawing").AddItem(new MenuItem("mDraw", "Disable all drawings").SetValue(false));
-            Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true,Color.FromArgb(255, 255, 0, 0))));
-            Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q Range").SetValue(new Circle(true,Color.FromArgb(255, 178, 0, 0))));
-            Config.SubMenu("drawing").AddItem(new MenuItem("WDraw", "Draw W Range").SetValue(new Circle(true, Color.FromArgb(255, 178, 0, 0))));
-            Config.SubMenu("drawing").AddItem(new MenuItem("EDraw", "Draw E Range").SetValue(new Circle(true,Color.FromArgb(255, 128, 0, 128))));
-            Config.SubMenu("drawing").AddItem(new MenuItem("RDraw", "Draw R Range").SetValue(new Circle(true, Color.FromArgb(255, 128, 0, 128))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 0))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("WDraw", "Draw W Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("EDraw", "Draw E Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("RDraw", "Draw R Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
 
             //Misc Menu
             Config.AddSubMenu(new Menu("Misc Settings", "misc"));
@@ -118,11 +121,12 @@ namespace Katarina
 
             //Wardjump Menu
             Config.AddSubMenu(new Menu("WardJump Settings", "wardjump"));
-            Config.SubMenu("misc").AddItem(new MenuItem("wardjumpkey", "WardJump key").SetValue(false));
-            Config.SubMenu("misc").AddItem(new MenuItem("wjpriority", "Wardjump priority").SetValue(new StringList(new[] { "Coming", "Soon" }, 0)));
+            Config.SubMenu("wardjump").AddItem(new MenuItem("wardjumpkey", "WardJump key").SetValue(new KeyBind("Z".ToCharArray()[0], KeyBindType.Press)));
+            Config.SubMenu("wardjump").AddItem(new MenuItem("wjpriority", "Wardjump priority").SetValue(new StringList(new[] { "Coming", "Soon" }, 0)));
 
             //AutoPots menu
             Config.AddSubMenu(new Menu("AutoPot", "AutoPot"));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AutoPot", "AutoPot enabled").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H", "Health Pot").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H_Per", "Health Pot %").SetValue(new Slider(35, 1)));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_Ign", "Auto pot when ignited").SetValue(true));
@@ -154,47 +158,7 @@ namespace Katarina
             // Select default target
             var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
 
-            // Keybinds
-            var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
-            var wardjumpKey = Config.Item("wardjumpkey").GetValue<KeyBind>().Active;
-
-            //Ultimate fix
-            if (ObjectManager.Player.IsDead) return;
-            if (InUlt)
-            {
-                Orbwalker.SetAttack(false);
-                Orbwalker.SetMovement(false);
-                return;
-            }
-            else
-            {
-                Orbwalker.SetAttack(true);
-                Orbwalker.SetMovement(true);
-            }
-
-            // WardJump
-           // if (wardjumpKey != null)
-            //{
-                //wardjump();
-            //}
-
-            // AutoPot
-            if (Config.Item("AutoPot").GetValue<bool>())
-            {
-                AutoPot();
-            }
-
-            // KillSteal
-            if (Config.Item("KillSteal").GetValue<bool>())
-            {
-                KillSteal();
-            }
-
-            // Harrass
-            if (harassKey && target != null)
-            {
-                Harass(target);
-            }
+            
 
             //Main features with Orbwalker
             switch (Orbwalker.ActiveMode)
@@ -215,6 +179,33 @@ namespace Katarina
                 default:
                     break;
             }
+
+            AutoPot();
+            KillSteal();
+            Harass(target);
+
+            //Ultimate fix
+            if (ObjectManager.Player.IsDead)
+            {
+                return;
+            }
+            if (InUlt)
+            {
+                Orbwalker.SetAttack(false);
+                Orbwalker.SetMovement(false);
+                return;
+            }
+            else
+            {
+                Orbwalker.SetAttack(true);
+                Orbwalker.SetMovement(true);
+            }
+
+            // WardJump
+            //if (wardjumpKey != null)
+            //{
+                //wardjump();
+            //}           
         }
 
         //E Humanizer
@@ -266,7 +257,7 @@ namespace Katarina
             //Spells drawing
             foreach (var spell in Spells.Where(spell => Config.Item(spell.Slot + "Draw").GetValue<Circle>().Active))
             {
-                Render.Circle.DrawCircle(Player.Position, spell.Range, Config.Item(spell.Slot + "Draw").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, spell.Range, spell.IsReady() ? System.Drawing.Color.Green : System.Drawing.Color.Red);
             }
 
             //Target Drawing
@@ -277,9 +268,9 @@ namespace Katarina
             }
         }
 
-        //JumpKS
         /*
-        private void JumpKs(Obj_AI_Hero hero)
+        //JumpKS
+        private static void JumpKs(Obj_AI_Hero hero)
         {
             foreach (Obj_AI_Minion ward in ObjectManager.Get<Obj_AI_Minion>().Where(ward =>
                 E.IsReady() && Q.IsReady() && ward.Name.ToLower().Contains("ward") &&
@@ -305,10 +296,13 @@ namespace Katarina
                 return;
             }
         }
-         */
+        */
+      
         //Killsteal
         private static void KillSteal()
         {
+            if (Config.Item("KillSteal").GetValue<bool>())
+            {
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>().Where(
                     hero => 
                     ObjectManager.Player.Distance(hero.ServerPosition) <= E.Range 
@@ -357,8 +351,7 @@ namespace Katarina
                 {
                     Q.Cast(hero, packetCast);
                 }
-            /*  else if (Q.IsReady() && E.IsReady() && Player.Distance(hero.ServerPosition) <= 1375 &&
-                            Config.Item("jumpKs", true).GetValue<bool>())
+                /*else if (Q.IsReady() && E.IsReady() && Player.Distance(hero.ServerPosition) <= 1375 && Config.Item("jumpKs", true).GetValue<bool>())
                     {
                         JumpKs(hero);
                         Q.Cast(hero, packetCast);
@@ -401,15 +394,15 @@ namespace Katarina
             }
 
             foreach (Obj_AI_Base target in ObjectManager.Get<Obj_AI_Base>().Where(
-                    target => 
-                    ObjectManager.Player.Distance(target.ServerPosition) <= E.Range 
+                    target =>
+                    ObjectManager.Player.Distance(target.ServerPosition) <= E.Range
                     && !target.IsMe
                     && target.IsTargetable
                     && !target.IsInvulnerable
                 ))
             {
                 foreach (Obj_AI_Hero focus in ObjectManager.Get<Obj_AI_Hero>().Where(
-                    focus => 
+                    focus =>
                     focus.Distance(target.ServerPosition) <= Q.Range
                     && focus.IsEnemy
                     && !focus.IsMe
@@ -427,14 +420,14 @@ namespace Katarina
                     {
                         Ignitedmg = (float)Damage.GetSummonerSpellDamage(Player, focus, Damage.SummonerSpell.Ignite);
                     }
-                    else 
+                    else
                     {
-                        Ignitedmg = 0f; 
+                        Ignitedmg = 0f;
                     }
 
                     //Mark Damage
                     var MarkDmg = Damage.CalcDamage(Player, focus, Damage.DamageType.Magical, Player.FlatMagicDamageMod * 0.15 + Player.Level * 15);
-                    
+
                     //Q
                     if (focus.Health - Qdmg < 0 && E.IsReady() && Q.IsReady() && focus.Distance(target.ServerPosition) <= Q.Range)
                     {
@@ -442,7 +435,7 @@ namespace Katarina
                         Q.Cast(focus, packetCast);
                     }
                     // Q + W
-                    if (focus.Distance(target.ServerPosition) <= W.Range && focus.Health - Qdmg - Wdmg < 0 && E.IsReady() && Q.IsReady()) 
+                    if (focus.Distance(target.ServerPosition) <= W.Range && focus.Health - Qdmg - Wdmg < 0 && E.IsReady() && Q.IsReady())
                     {
                         CastE(target);
                         Q.Cast(focus, packetCast);
@@ -472,43 +465,47 @@ namespace Katarina
                     }
 
                 }
+
+            }
             }
         }
 
         // Auto pot
         private static void AutoPot()
         {
-            if (Config.SubMenu("AutoPot").Item("AP_Ign").GetValue<bool>())
-            if (Player.HasBuff("summonerdot") || Player.HasBuff("MordekaiserChildrenOfTheGrave"))
+            if (Config.Item("AutoPot").GetValue<bool>())
             {
-                if (!Player.InFountain())
-
-                    if (Items.HasItem(biscuit.Id) && Items.CanUseItem(biscuit.Id) && !Player.HasBuff("ItemMiniRegenPotion"))
+                if (Config.SubMenu("AutoPot").Item("AP_Ign").GetValue<bool>())
+                    if (Player.HasBuff("summonerdot") || Player.HasBuff("MordekaiserChildrenOfTheGrave"))
                     {
-                        biscuit.Cast(Player);
-                    }
-                    else if (Items.HasItem(HPpot.Id) && Items.CanUseItem(HPpot.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("Health Potion"))
-                    {
-                        HPpot.Cast(Player);
-                    }
-                    else if (Items.HasItem(Flask.Id) && Items.CanUseItem(Flask.Id) && !Player.HasBuff("ItemCrystalFlask"))
-                    {
-                        Flask.Cast(Player);
-                    }
-            }
+                        if (!Player.InFountain())
 
-            if (ObjectManager.Player.HasBuff("Recall") || Player.InFountain() && Player.InShop())
-            {
-                return;
-            }
+                            if (Items.HasItem(biscuit.Id) && Items.CanUseItem(biscuit.Id) && !Player.HasBuff("ItemMiniRegenPotion"))
+                            {
+                                biscuit.Cast(Player);
+                            }
+                            else if (Items.HasItem(HPpot.Id) && Items.CanUseItem(HPpot.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("Health Potion"))
+                            {
+                                HPpot.Cast(Player);
+                            }
+                            else if (Items.HasItem(Flask.Id) && Items.CanUseItem(Flask.Id) && !Player.HasBuff("ItemCrystalFlask"))
+                            {
+                                Flask.Cast(Player);
+                            }
+                    }
 
-            //Health Pots
-            if (Player.Health/100 <= Config.Item("AP_H_Per").GetValue<Slider>().Value && !Player.HasBuff("RegenerationPotion", true))
-            {
-               Items.UseItem(2003);
+                if (ObjectManager.Player.HasBuff("Recall") || Player.InFountain() && Player.InShop())
+                {
+                    return;
+                }
+
+                //Health Pots
+                if (Player.Health / 100 <= Config.Item("AP_H_Per").GetValue<Slider>().Value && !Player.HasBuff("RegenerationPotion", true))
+                {
+                    Items.UseItem(2003);
+                }
             }
         }
-
 
         //Combo
         private static void Combo()
@@ -588,43 +585,45 @@ namespace Katarina
         //Harass
         private static void Harass(Obj_AI_Base target)
         {
-            if (target == null)
-            {
-                return;
-            }
-
+            var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
             var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex; //Select the Harass Mode
-            switch (menuItem)
+
+            if (harassKey && target != null)
             {
-                case 0: //1st mode: Q only
-                    if (Q.IsReady())
-                    {
-                        Q.CastOnUnit(target, packetCast);
-                        return;
-                    }
-                    break;
-                case 1: //2nd mode: Q and W
-                    if (Q.IsReady() && W.IsReady())
-                    {
-                        Q.Cast(target, packetCast);
-                        if (W.IsInRange(target))
+
+                switch (menuItem)
+                {
+                    case 0: //1st mode: Q only
+                        if (Q.IsReady())
                         {
-                        W.Cast(target, packetCast);
+                            Q.CastOnUnit(target, packetCast);
+                            return;
                         }
-                        return;
-                    }
-                    break;
-                case 2: //3rd mode: Q, E and W
-                    if (Q.IsReady() && W.IsReady() && E.IsReady())
-                    {
-                        Q.Cast(target, packetCast);
-                        CastE(target);  
-                        W.Cast(target, packetCast);
-                        return;
-                    }
-                    break;
+                        break;
+                    case 1: //2nd mode: Q and W
+                        if (Q.IsReady() && W.IsReady())
+                        {
+                            Q.Cast(target, packetCast);
+                            if (W.IsInRange(target))
+                            {
+                                W.Cast(target, packetCast);
+                            }
+                            return;
+                        }
+                        break;
+                    case 2: //3rd mode: Q, E and W
+                        if (Q.IsReady() && W.IsReady() && E.IsReady())
+                        {
+                            Q.Cast(target, packetCast);
+                            CastE(target);
+                            W.Cast(target, packetCast);
+                            return;
+                        }
+                        break;
+
+                }
             }
-            }
+        }
         
         //Farm
         private static void Farm()
