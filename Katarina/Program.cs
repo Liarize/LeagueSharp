@@ -88,7 +88,7 @@ namespace Katarina
             //Harass Menu
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
             Config.SubMenu("harass").AddItem(new MenuItem("harassKey", "Harass Key").SetValue(new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
-            Config.SubMenu("harass").AddItem(new MenuItem("hMode", "Harass Mode: ").SetValue(new StringList(new[] {"Q", "Q+W", "Q+E+W"})));
+            Config.SubMenu("harass").AddItem(new MenuItem("hMode", "Harass Mode: ").SetValue(new StringList(new[] {"Q only", "Q+W", "Q+E+W"})));
             
             //Farm
             Config.AddSubMenu(new Menu("Farming Settings", "farm"));
@@ -106,6 +106,7 @@ namespace Katarina
             //Drawing Menu
             Config.AddSubMenu(new Menu("Draw Settings", "drawing"));
             Config.SubMenu("drawing").AddItem(new MenuItem("mDraw", "Disable all drawings").SetValue(false));
+            Config.SubMenu("drawing").AddItem(new MenuItem("ultiDmgDraw", "Draw Ultimate damage").SetValue(false));
             Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 0))));
             Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
             Config.SubMenu("drawing").AddItem(new MenuItem("WDraw", "Draw W Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
@@ -734,7 +735,7 @@ namespace Katarina
                 dmg += Player.GetSpellDamage(target, SpellSlot.E);
             }
 
-            if (R.IsReady())
+            if (Config.Item("ultiDmgDraw").GetValue<bool>())
             {
                 dmg += Player.GetSpellDamage(target, SpellSlot.R, 1);
             }
