@@ -40,14 +40,15 @@ namespace Fiddlesticks
 
         private static void OnLoad(EventArgs args)
         {
-            if (ObjectManager.Player.ChampionName != CharName) return;
+            if (ObjectManager.Player.ChampionName != CharName)
+            {
+                return;
+            }
 
             Q = new Spell(SpellSlot.Q, 575);
             W = new Spell(SpellSlot.W, 575);
             E = new Spell(SpellSlot.E, 750);
             R = new Spell(SpellSlot.R, 800);
-
-            packetCast = Config.Item("usePackets").GetValue<bool>();
 
             IgniteSlot = Player.GetSpellSlot("summonerdot");
             SetSmiteSlot();
@@ -74,7 +75,7 @@ namespace Fiddlesticks
             Config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R in Combo").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Burst").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Combo").SetValue(true));
 
             //Killsteal
             Config.AddSubMenu(new Menu("Killsteal Settings", "KillSteal"));
@@ -102,19 +103,22 @@ namespace Fiddlesticks
             //Drawing Menu
             Config.AddSubMenu(new Menu("Draw Settings", "drawing"));
             Config.SubMenu("drawing").AddItem(new MenuItem("mDraw", "Disable all drawings").SetValue(false));
-            Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true,Color.FromArgb(255, 255, 0, 0))));
-            Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q & W Range").SetValue(new Circle(true,Color.FromArgb(255, 178, 0, 0))));
-            Config.SubMenu("drawing").AddItem(new MenuItem("EDraw", "Draw E Range").SetValue(new Circle(true,Color.FromArgb(255, 128, 0, 128))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 0))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("WDraw", "Draw W Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("EDraw", "Draw E Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("RDraw", "Draw R Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));
 
             //Misc Menu
             Config.AddSubMenu(new Menu("Misc Settings", "misc"));
             Config.SubMenu("misc").AddItem(new MenuItem("stopChannel", "Interrupt Channeling Spells").SetValue(true));
             Config.SubMenu("misc").AddItem(new MenuItem("gapcloser", "Interrupt Gapclosers").SetValue(true));
             Config.SubMenu("misc").AddItem(new MenuItem("usePackets", "Use Packets to Cast Spells").SetValue(false));
-            Config.SubMenu("misc").AddItem(new MenuItem("autolvlup", "Auto Level Spells").SetValue(new StringList(new[] { "W->E->Q", "Q>W>E" }, 0)));
+            Config.SubMenu("misc").AddItem(new MenuItem("autolvlup", "Auto Level Spells").SetValue(new StringList(new[] { "W>E>Q", "W>Q>E" }, 0)));
 
             //AutoPots menu
             Config.AddSubMenu(new Menu("AutoPot", "AutoPot"));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AutoPot", "AutoPot enabled").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H", "Health Pot").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_M", "Mana Pot").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H_Per", "Health Pot %").SetValue(new Slider(35, 1)));
@@ -133,6 +137,8 @@ namespace Fiddlesticks
 
             //Make menu visible
             Config.AddToMainMenu();
+
+            packetCast = Config.Item("usePackets").GetValue<bool>();
 
             //Damage Drawer
             Utility.HpBarDamageIndicator.DamageToUnit = ComboDamage;
@@ -153,27 +159,6 @@ namespace Fiddlesticks
             // Select default target
             var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
 
-            // Keybinds
-            var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
-
-            // AutoPot
-            if (Config.Item("AutoPot").GetValue<bool>())
-            {
-                AutoPot();
-            }
-
-            // KillSteal
-            if (Config.Item("KillSteal").GetValue<bool>())
-            {
-                KillSteal();
-            }
-
-            // Harrass
-            if (harassKey && target != null)
-            {
-                Harass(target);
-            }
-
             //Main features with Orbwalker
             switch (Orbwalker.ActiveMode)
             {
@@ -181,28 +166,31 @@ namespace Fiddlesticks
                     Combo(target);
                     break;
                 case Orbwalking.OrbwalkingMode.Mixed:
+                    Harass(target);
+                    Farm();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
+                    Farm();
                     JungleClear();
                     break;
                 case Orbwalking.OrbwalkingMode.LastHit:
                     Farm();
                     break;
-                default:
-                    break;
             }
+
+            AutoPot();
+            KillSteal();
+            Harass(target);
 
             //W cancel fix for Orbwalker
             if (Player.HasBuff("Drain"))
             {
-                //Evade.Enabled(false); <- possible?
                 Orbwalker.SetMovement(false);
                 Orbwalker.SetAttack(false);
             }
 
             if (!Player.HasBuff("Drain"))
             {
-                //Evade.Enabled(true); <- possible?
                 Orbwalker.SetMovement(true);
                 Orbwalker.SetAttack(true);
             }
@@ -210,8 +198,8 @@ namespace Fiddlesticks
         }
 
         //Drawing
-        private static void Drawing_OnDraw(EventArgs args)
-        {
+         private static void Drawing_OnDraw(EventArgs args)
+         {
             //Main drawing switch
             if (Config.Item("mDraw").GetValue<bool>())
             {
@@ -221,7 +209,7 @@ namespace Fiddlesticks
             //Spells drawing
             foreach (var spell in Spells.Where(spell => Config.Item(spell.Slot + "Draw").GetValue<Circle>().Active))
             {
-                Render.Circle.DrawCircle(Player.Position, spell.Range, Config.Item(spell.Slot + "Draw").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, spell.Range, spell.IsReady() ? System.Drawing.Color.Green : System.Drawing.Color.Red);
             }
 
             //Target Drawing
@@ -232,7 +220,7 @@ namespace Fiddlesticks
             }
         }
 
-        // Anti Gapcloser
+       // Anti Gapcloser
        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
             if (!Config.Item("gapcloser").GetValue<bool>())
@@ -263,22 +251,28 @@ namespace Fiddlesticks
         //Killsteal
         private static void KillSteal()
         {
-            var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
-            if (target == null) return;
-
-            if (E.IsReady() && W.IsReady() &&
-               ObjectManager.Player.IsKillable(target,
-                   new[] { Tuple.Create(SpellSlot.E, 0), Tuple.Create(SpellSlot.W, 0) }) &&
-               ObjectManager.Player.Distance(target, false) <= E.Range + target.BoundingRadius)
+            if (Config.Item("KillSteal").GetValue<bool>())
             {
-                E.Cast(target, packetCast);
-                W.Cast(target, packetCast);
-            }
-            if (IgniteSlot != SpellSlot.Unknown && ObjectManager.Player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready && ObjectManager.Player.Distance(target, false) < 600)
-            {
-                if (ObjectManager.Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) > target.Health)
+                var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+                if (target == null)
                 {
-                    ObjectManager.Player.Spellbook.CastSpell(IgniteSlot, target);
+                    return;
+                }
+
+                if (E.IsReady() && W.IsReady() && target.Health < W.GetDamage(target, 1) + E.GetDamage(target) &&
+                    ObjectManager.Player.Distance(target, false) <= E.Range + target.BoundingRadius)
+                {
+                    E.Cast(target, packetCast);
+                    W.Cast(target, packetCast);
+                }
+                if (IgniteSlot != SpellSlot.Unknown &&
+                    ObjectManager.Player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready &&
+                    ObjectManager.Player.Distance(target, false) < 600)
+                {
+                    if (ObjectManager.Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) > target.Health)
+                    {
+                        ObjectManager.Player.Spellbook.CastSpell(IgniteSlot, target);
+                    }
                 }
             }
         }
@@ -286,39 +280,46 @@ namespace Fiddlesticks
         // Auto pot
         private static void AutoPot()
         {
-            if (Config.SubMenu("AutoPot").Item("AP_Ign").GetValue<bool>())
-            if (Player.HasBuff("summonerdot") || Player.HasBuff("MordekaiserChildrenOfTheGrave"))
+            if (Config.Item("AutoPot").GetValue<bool>())
             {
-                if (!Player.InFountain())
+                if (Player.HasBuff("summonerdot") || Player.HasBuff("MordekaiserChildrenOfTheGrave"))
+                {
+                    if (!Player.InFountain())
 
-                    if (Items.HasItem(biscuit.Id) && Items.CanUseItem(biscuit.Id) && !Player.HasBuff("ItemMiniRegenPotion"))
-                    {
-                        biscuit.Cast(Player);
-                    }
-                    else if (Items.HasItem(HPpot.Id) && Items.CanUseItem(HPpot.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("Health Potion"))
-                    {
-                        HPpot.Cast(Player);
-                    }
-                    else if (Items.HasItem(Flask.Id) && Items.CanUseItem(Flask.Id) && !Player.HasBuff("ItemCrystalFlask"))
-                    {
-                        Flask.Cast(Player);
-                    }
-            }
+                        if (Items.HasItem(biscuit.Id) && Items.CanUseItem(biscuit.Id) &&
+                            !Player.HasBuff("ItemMiniRegenPotion"))
+                        {
+                            biscuit.Cast(Player);
+                        }
+                        else if (Items.HasItem(HPpot.Id) && Items.CanUseItem(HPpot.Id) &&
+                                 !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("Health Potion"))
+                        {
+                            HPpot.Cast(Player);
+                        }
+                        else if (Items.HasItem(Flask.Id) && Items.CanUseItem(Flask.Id) &&
+                                 !Player.HasBuff("ItemCrystalFlask"))
+                        {
+                            Flask.Cast(Player);
+                        }
+                }
 
-            if (ObjectManager.Player.HasBuff("Recall") || Player.InFountain() && Player.InShop())
-            {
-                return;
-            }
+                if (ObjectManager.Player.HasBuff("Recall") || Player.InFountain() && Player.InShop())
+                {
+                    return;
+                }
 
-            //Health Pots
-            if (Player.Health/100 <= Config.Item("AP_H_Per").GetValue<Slider>().Value && !Player.HasBuff("RegenerationPotion", true))
-            {
-               Items.UseItem(2003);
-            }
-            //Mana Pots
-            if (Player.Health/100 <= Config.Item("A_M_Per").GetValue<Slider>().Value && !Player.HasBuff("FlaskOfCrystalWater", true))
-            {
-                Items.UseItem(2004);
+                //Health Pots
+                if (Player.Health / 100 <= Config.Item("AP_H_Per").GetValue<Slider>().Value &&
+                    !Player.HasBuff("RegenerationPotion", true))
+                {
+                    Items.UseItem(2003);
+                }
+                //Mana Pots
+                if (Player.Health / 100 <= Config.Item("A_M_Per").GetValue<Slider>().Value &&
+                    !Player.HasBuff("FlaskOfCrystalWater", true))
+                {
+                    Items.UseItem(2004);
+                }
             }
         }
 
@@ -331,11 +332,11 @@ namespace Fiddlesticks
                 return;
             }
 
-           /* if (R.IsReady() && Config.Item("useR").GetValue<bool>())
+            if (R.IsReady() && Config.Item("useR").GetValue<bool>())
             {
                 R.Cast(target.ServerPosition, packetCast);
             }
-            */
+            
             if (Q.IsReady() && (Config.Item("useQ").GetValue<bool>()))
             {
                 Q.CastOnUnit(target, packetCast);
@@ -365,7 +366,6 @@ namespace Fiddlesticks
                 if (SmiteSlot != SpellSlot.Unknown && Player.Spellbook.CanUseSpell(SmiteSlot) == SpellState.Ready)
                 {
                     Player.Spellbook.CastSpell(SmiteSlot, target);
-                    return;
                 }
             }
         }
@@ -373,7 +373,10 @@ namespace Fiddlesticks
         //Harass
         private static void Harass(Obj_AI_Base target)
         {
-            if (target == null)
+            var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
+            var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex; //Select the Harass Mode
+
+            if (harassKey && target != null)
             {
                 return;
             }
@@ -382,14 +385,12 @@ namespace Fiddlesticks
             if ((Player.Mana > mana))
             {
 
-            var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex; //Select the Harass Mode
             switch (menuItem)
             {
                 case 0: //1st mode: E only
                     if (E.IsReady())
                     {
                         E.CastOnUnit(target, packetCast);
-                        return;
                     }
                     break;
                 case 1: //2nd mode: Q and W
@@ -397,7 +398,6 @@ namespace Fiddlesticks
                     {
                         Q.CastOnUnit(target, packetCast);
                         W.CastOnUnit(target, packetCast);
-                        return;
                     }
                     break;
                 case 2: //3rd mode: Q, E and W
@@ -406,7 +406,6 @@ namespace Fiddlesticks
                         Q.Cast(target, packetCast);
                         E.Cast(target, packetCast);
                         W.Cast(target, packetCast);
-                        return;
                     }
                     break;
             }

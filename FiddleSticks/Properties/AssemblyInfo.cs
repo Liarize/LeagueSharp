@@ -9,12 +9,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("FiddleSticks")]
+[assembly: AssemblyTitle("FiddleSticks#")]
 [assembly: AssemblyDescription("Plays FiddleSticks")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Jouza")]
 [assembly: AssemblyProduct("FiddleSticks")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
+[assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -39,5 +39,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("4.21.2.0")]
-[assembly: AssemblyFileVersion("4.21.2.0")]
+[assembly: AssemblyVersion("5.1.1.0")]
+[assembly: AssemblyFileVersion("5.1.1.0")]

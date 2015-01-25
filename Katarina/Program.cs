@@ -76,7 +76,7 @@ namespace Katarina
             //Combo Menu
             Config.AddSubMenu(new Menu("Smart Combo Settings", "combo"));
             Config.SubMenu("combo").AddItem(new MenuItem("smartR", "Use Smart R").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("useItems", "Use Items with Burst").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("useItems", "Use Items with Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("wjCombo", "Use WardJump in Combo").SetValue(true));
 
             //Killsteal
@@ -107,7 +107,7 @@ namespace Katarina
             Config.AddSubMenu(new Menu("Draw Settings", "drawing"));
             Config.SubMenu("drawing").AddItem(new MenuItem("mDraw", "Disable all drawings").SetValue(false));
             Config.SubMenu("drawing").AddItem(new MenuItem("ultiDmgDraw", "Draw Ultimate damage").SetValue(false));
-            Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 0))));
+            Config.SubMenu("drawing").AddItem(new MenuItem("Target", "Highlight Target").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 0))));
             Config.SubMenu("drawing").AddItem(new MenuItem("QDraw", "Draw Q Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
             Config.SubMenu("drawing").AddItem(new MenuItem("WDraw", "Draw W Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
             Config.SubMenu("drawing").AddItem(new MenuItem("EDraw", "Draw E Range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(255, 255, 255, 255))));
@@ -157,9 +157,7 @@ namespace Katarina
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Select default target
-            var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
-
-            
+            var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);  
 
             //Main features with Orbwalker
             switch (Orbwalker.ActiveMode)
@@ -173,11 +171,10 @@ namespace Katarina
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
                     Farm();
+                    JungleClear();
                     break;
                 case Orbwalking.OrbwalkingMode.LastHit:
                     Farm();
-                    break;
-                default:
                     break;
             }
 
