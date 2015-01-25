@@ -14,6 +14,7 @@ namespace Fiddlesticks
     internal class Program
     {
         public const string CharName = "Fiddlesticks";
+        public static bool InDrain = false;
         public static Orbwalking.Orbwalker Orbwalker;
         public static List<Spell> Spells = new List<Spell>();
         public static Spell Q;
@@ -40,11 +41,11 @@ namespace Fiddlesticks
 
         private static void OnLoad(EventArgs args)
         {
-            if (ObjectManager.Player.ChampionName != CharName)
+            /*if (ObjectManager.Player.ChampionName != CharName)
             {
                 return;
             }
-
+            */
             Q = new Spell(SpellSlot.Q, 575);
             W = new Spell(SpellSlot.W, 575);
             E = new Spell(SpellSlot.E, 750);
@@ -79,16 +80,17 @@ namespace Fiddlesticks
 
             //Killsteal
             Config.AddSubMenu(new Menu("Killsteal Settings", "KillSteal"));
-            Config.SubMenu("combo").AddItem(new MenuItem("KillSteal", "Auto KS enabled").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("ksW", "KS with W").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("ksE", "KS with E").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("ksI", "KS with Ignite").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("ksS", "KS with Smite").SetValue(true));  
+            Config.SubMenu("killsteal").AddItem(new MenuItem("KillSteal", "Auto KS enabled").SetValue(true));
+            Config.SubMenu("killsteal").AddItem(new MenuItem("ksW", "KS with W").SetValue(true));
+            Config.SubMenu("killsteal").AddItem(new MenuItem("ksE", "KS with E").SetValue(true));
+            Config.SubMenu("killsteal").AddItem(new MenuItem("ksI", "KS with Ignite").SetValue(true));
+            Config.SubMenu("killsteal").AddItem(new MenuItem("ksS", "KS with Smite").SetValue(true));  
 
             //Harass Menu
             Config.AddSubMenu(new Menu("Harass Settings", "harass"));
             Config.SubMenu("harass").AddItem(new MenuItem("harassKey", "Harass Key").SetValue(new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
-            Config.SubMenu("harass").AddItem(new MenuItem("hMode", "Harass Mode: ").SetValue(new StringList(new[] {"E", "Q+W", "Q+E+W"})));
+            Config.SubMenu("harass").AddItem(new MenuItem("hMode", "Harass Mode:").SetValue(new StringList(new[] {"E", "Q+W", "Q+E+W"})));
+            Config.SubMenu("harass").AddItem(new MenuItem("harassMana", "Min. Mana Percent:").SetValue(new Slider(50)));
             
             //Farm Menu
             Config.AddSubMenu(new Menu("Farming Settings", "farm"));
@@ -122,7 +124,7 @@ namespace Fiddlesticks
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H", "Health Pot").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_M", "Mana Pot").SetValue(true));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H_Per", "Health Pot %").SetValue(new Slider(35, 1)));
-            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_H_Per", "Mana Pot %").SetValue(new Slider(35, 1)));
+            Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_M_Per", "Mana Pot %").SetValue(new Slider(35, 1)));
             Config.SubMenu("AutoPot").AddItem(new MenuItem("AP_Ign", "Auto pot when ignite").SetValue(true));
 
             if (SmiteSlot != SpellSlot.Unknown)
@@ -166,11 +168,9 @@ namespace Fiddlesticks
                     Combo(target);
                     break;
                 case Orbwalking.OrbwalkingMode.Mixed:
-                    Harass(target);
                     Farm();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
-                    Farm();
                     JungleClear();
                     break;
                 case Orbwalking.OrbwalkingMode.LastHit:
@@ -182,19 +182,37 @@ namespace Fiddlesticks
             KillSteal();
             Harass(target);
 
-            //W cancel fix for Orbwalker
-            if (Player.HasBuff("Drain"))
+            //Drain Fix
+            if (ObjectManager.Player.IsDead)
             {
-                Orbwalker.SetMovement(false);
+                return;
+            }
+            if (InDrain)
+            {
                 Orbwalker.SetAttack(false);
+                Orbwalker.SetMovement(false);
             }
-
-            if (!Player.HasBuff("Drain"))
+            else
             {
-                Orbwalker.SetMovement(true);
                 Orbwalker.SetAttack(true);
+                Orbwalker.SetMovement(true);
+            }         
+        }
+
+        //Drain Fix
+        private static void PlayAnimation(GameObject sender, GameObjectPlayAnimationEventArgs args)
+        {
+            if (sender.IsMe)
+            {
+                if (args.Animation == "Spell2")
+                {
+                    InDrain = true;
+                }
+                else if (args.Animation == "Run" || args.Animation == "Idle1" || args.Animation == "Attack2" || args.Animation == "Attack1")
+                {
+                    InDrain = false;
+                }
             }
-            
         }
 
         //Drawing
@@ -220,7 +238,7 @@ namespace Fiddlesticks
             }
         }
 
-       // Anti Gapcloser
+       //Anti Gapcloser
        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
             if (!Config.Item("gapcloser").GetValue<bool>())
@@ -277,7 +295,7 @@ namespace Fiddlesticks
             }
         }
 
-        // Auto pot
+        //Auto pot
         private static void AutoPot()
         {
             if (Config.Item("AutoPot").GetValue<bool>())
@@ -315,7 +333,7 @@ namespace Fiddlesticks
                     Items.UseItem(2003);
                 }
                 //Mana Pots
-                if (Player.Health / 100 <= Config.Item("A_M_Per").GetValue<Slider>().Value &&
+                if (Player.Health / 100 <= Config.Item("AP_M_Per").GetValue<Slider>().Value &&
                     !Player.HasBuff("FlaskOfCrystalWater", true))
                 {
                     Items.UseItem(2004);
@@ -336,24 +354,6 @@ namespace Fiddlesticks
             {
                 R.Cast(target.ServerPosition, packetCast);
             }
-            
-            if (Q.IsReady() && (Config.Item("useQ").GetValue<bool>()))
-            {
-                Q.CastOnUnit(target, packetCast);
-                return;
-            }
-            
-            if (E.IsReady() && (Config.Item("useE").GetValue<bool>()))
-            {
-                E.CastOnUnit(target, packetCast);
-                return;
-            }
-
-            if (W.IsReady() && (Config.Item("useW").GetValue<bool>()))
-            {
-                W.CastOnUnit(target, packetCast);
-                return;
-            }
 
             if (Config.Item("comboItems").GetValue<bool>())
             {
@@ -368,6 +368,25 @@ namespace Fiddlesticks
                     Player.Spellbook.CastSpell(SmiteSlot, target);
                 }
             }
+
+            if (Q.IsReady() && (Config.Item("useQ").GetValue<bool>()))
+            {
+                Q.CastOnUnit(target, packetCast);
+                return;
+            }
+            
+            if (E.IsReady() && (Config.Item("useE").GetValue<bool>()))
+            {
+                E.CastOnUnit(target, packetCast);
+                return;
+            }
+
+            if (W.IsReady() && (Config.Item("useW").GetValue<bool>()))
+            {
+                Orbwalker.SetAttack(false);
+                Orbwalker.SetMovement(false);
+                W.CastOnUnit(target, packetCast);
+            }          
         }
 
         //Harass
@@ -375,13 +394,13 @@ namespace Fiddlesticks
         {
             var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
             var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex; //Select the Harass Mode
+            var mana = Player.MaxMana * (Config.Item("harassMana").GetValue<Slider>().Value / 100.0); //Check if player has enough mana
 
             if (harassKey && target != null)
             {
                 return;
             }
-
-            var mana = Player.MaxMana*(Config.Item("harassMana").GetValue<Slider>().Value/100.0); //Check if player has enough mana
+            
             if ((Player.Mana > mana))
             {
 
@@ -403,9 +422,9 @@ namespace Fiddlesticks
                 case 2: //3rd mode: Q, E and W
                     if (Q.IsReady() && W.IsReady() && E.IsReady())
                     {
-                        Q.Cast(target, packetCast);
-                        E.Cast(target, packetCast);
-                        W.Cast(target, packetCast);
+                        Q.CastOnUnit(target, packetCast);
+                        E.CastOnUnit(target, packetCast);
+                        W.CastOnUnit(target, packetCast);
                     }
                     break;
             }
