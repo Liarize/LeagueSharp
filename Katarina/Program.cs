@@ -531,9 +531,7 @@ namespace Katarina
                         CastE(target);
                     }
                 }
-
                 else
-
                 {
                     if (E.IsReady())
                     {
@@ -566,9 +564,7 @@ namespace Katarina
                         return;
                     }
                 }
-
                 else if (R.IsReady() && !InUlt && !E.IsReady())
-
                 {
                     Orbwalker.SetAttack(false);
                     Orbwalker.SetMovement(false);
@@ -604,7 +600,7 @@ namespace Katarina
                             Q.Cast(target, packetCast);
                             if (W.IsInRange(target))
                             {
-                                W.Cast(target, packetCast);
+                                W.Cast(packetCast);
                             }
                             return;
                         }
@@ -614,7 +610,7 @@ namespace Katarina
                         {
                             Q.Cast(target, packetCast);
                             CastE(target);
-                            W.Cast(target, packetCast);
+                            W.Cast(packetCast);
                             return;
                         }
                         break;
