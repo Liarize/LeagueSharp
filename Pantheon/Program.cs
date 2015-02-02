@@ -9,12 +9,11 @@ using LeagueSharp.Common;
 
 #endregion
 
-namespace Fiddlesticks
+namespace Pantheon
 {
-    internal class Program
+    public class Program
     {
-        public const string CharName = "Fiddlesticks";
-        public static bool InDrain;
+        public const string CharName = "Pantheon";
         public static Orbwalking.Orbwalker Orbwalker;
         public static List<Spell> Spells = new List<Spell>();
         public static Spell Q;
@@ -25,31 +24,26 @@ namespace Fiddlesticks
         public static SpellSlot SmiteSlot;
         public static Menu Config;
         public static Obj_AI_Hero Player = ObjectManager.Player;
-
         //Packet casting
         public static bool PacketCast;
-
+        //E Fix
+        public static bool UsingE;
         // Items
         public static Items.Item Biscuit = new Items.Item(2010, 10);
         public static Items.Item HPpot = new Items.Item(2003, 10);
         public static Items.Item Flask = new Items.Item(2041, 10);
 
-        private static void Main(string[] args)
+        public static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += OnLoad;
         }
 
         private static void OnLoad(EventArgs args)
         {
-            /*if (ObjectManager.Player.ChampionName != CharName)
-            {
-                return;
-            }
-            */
-            Q = new Spell(SpellSlot.Q, 575);
-            W = new Spell(SpellSlot.W, 575);
-            E = new Spell(SpellSlot.E, 750);
-            R = new Spell(SpellSlot.R, 800);
+            Q = new Spell(SpellSlot.Q, 600);
+            W = new Spell(SpellSlot.W, 600);
+            E = new Spell(SpellSlot.E, 700);
+            //R = new Spell(SpellSlot.R, 800);
 
             IgniteSlot = Player.GetSpellSlot("summonerdot");
             SetSmiteSlot();
@@ -75,12 +69,16 @@ namespace Fiddlesticks
             Config.SubMenu("combo").AddItem(new MenuItem("useQ", "Use Q in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E in Combo").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R in Combo").SetValue(true));
+            //Config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R in Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("comboItems", "Use Items with Combo").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("smartW", "Smart W").SetValue(true));
+            Config.SubMenu("combo").AddItem(new MenuItem("smartSmite", "Smart Smite").SetValue(true));
+
 
             //Killsteal
             Config.AddSubMenu(new Menu("Killsteal Settings", "KillSteal"));
             Config.SubMenu("KillSteal").AddItem(new MenuItem("KillSteal", "Auto KS enabled").SetValue(true));
+            Config.SubMenu("KillSteal").AddItem(new MenuItem("ksQ", "KS with Q").SetValue(true));
             Config.SubMenu("KillSteal").AddItem(new MenuItem("ksW", "KS with W").SetValue(true));
             Config.SubMenu("KillSteal").AddItem(new MenuItem("ksE", "KS with E").SetValue(true));
             Config.SubMenu("KillSteal").AddItem(new MenuItem("ksI", "KS with Ignite").SetValue(true));
@@ -93,16 +91,23 @@ namespace Fiddlesticks
                     new MenuItem("harassKey", "Harass Key").SetValue(
                         new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
             Config.SubMenu("harass")
-                .AddItem(new MenuItem("hMode", "Harass Mode:").SetValue(new StringList(new[] { "E", "Q+W", "Q+E+W" })));
+                .AddItem(
+                    new MenuItem("hMode", "Harass Mode:").SetValue(new StringList(new[] { "Q only", "W+E", "W+Q" })));
+            Config.SubMenu("harass")
+                .AddItem(
+                    new MenuItem("autoQ", "Auto Q").SetValue(new KeyBind("Z".ToCharArray()[0], KeyBindType.Toggle)));
+            Config.SubMenu("harass").AddItem(new MenuItem("autoQsmart", "Smart Auto Q").SetValue(true));
             Config.SubMenu("harass").AddItem(new MenuItem("harassMana", "Min. Mana Percent:").SetValue(new Slider(50)));
 
             //Farm Menu
             Config.AddSubMenu(new Menu("Farming Settings", "farm"));
+            Config.SubMenu("farm").AddItem(new MenuItem("qFarm", "Farm with Q").SetValue(true));
             Config.SubMenu("farm").AddItem(new MenuItem("eFarm", "Farm with E").SetValue(true));
             Config.SubMenu("farm").AddItem(new MenuItem("farmMana", "Min. Mana Percent:").SetValue(new Slider(50)));
 
             //Jungle Clear Menu
             Config.AddSubMenu(new Menu("Jungle Clear Settings", "jungle"));
+            Config.SubMenu("jungle").AddItem(new MenuItem("qJungle", "Clear with Q").SetValue(true));
             Config.SubMenu("jungle").AddItem(new MenuItem("wJungle", "Clear with W").SetValue(true));
             Config.SubMenu("jungle").AddItem(new MenuItem("eJungle", "Clear with E").SetValue(true));
 
@@ -122,9 +127,9 @@ namespace Fiddlesticks
             Config.SubMenu("drawing")
                 .AddItem(
                     new MenuItem("EDraw", "Draw E Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));
-            Config.SubMenu("drawing")
+            /*Config.SubMenu("drawing")
                 .AddItem(
-                    new MenuItem("RDraw", "Draw R Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));
+                    new MenuItem("RDraw", "Draw R Range").SetValue(new Circle(true, Color.FromArgb(255, 255, 255, 255))));*/
 
             //Misc Menu
             Config.AddSubMenu(new Menu("Misc Settings", "misc"));
@@ -134,7 +139,7 @@ namespace Fiddlesticks
             Config.SubMenu("misc")
                 .AddItem(
                     new MenuItem("autolvlup", "Auto Level Spells").SetValue(
-                        new StringList(new[] { "W>E>Q", "W>Q>E" })));
+                        new StringList(new[] { "Q>E>W", "Q>W>E", "E>Q>W" })));
 
             //AutoPots menu
             Config.AddSubMenu(new Menu("AutoPot", "AutoPot"));
@@ -147,7 +152,7 @@ namespace Fiddlesticks
 
             if (SmiteSlot != SpellSlot.Unknown)
             {
-                Config.SubMenu("combo").AddItem(new MenuItem("autoSmite", "Smite enemy in Combo").SetValue(true));
+                Config.SubMenu("combo").AddItem(new MenuItem("useSmite", "Use Smite").SetValue(true));
             }
 
             //Make menu visible
@@ -166,25 +171,16 @@ namespace Fiddlesticks
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
 
             //Announce that the assembly has been loaded
-            Game.PrintChat("<font color=\"#00BFFF\">Fiddlesticks# -</font> <font color=\"#FFFFFF\">Loaded</font>");
+            Game.PrintChat("<font color=\"#00BFFF\">Pantheon# -</font> <font color=\"#FFFFFF\">Loaded</font>");
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
             // Select default target
-            var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
 
-            //Drain Fix
-            if (Player.HasBuff("Drain"))
-            {
-                Orbwalker.SetAttack(false);
-                Orbwalker.SetMovement(false);
-            }
-            else
-            {
-                Orbwalker.SetAttack(true);
-                Orbwalker.SetMovement(true);
-            }
+            Orbwalker.SetAttack(!EFix());
+            Orbwalker.SetMovement(!EFix());
 
             //Main features with Orbwalker
             switch (Orbwalker.ActiveMode)
@@ -242,49 +238,71 @@ namespace Fiddlesticks
 
             if (gapcloser.Sender.IsValidTarget(Q.Range))
             {
-                Q.CastOnUnit(gapcloser.Sender, PacketCast);
+                W.CastOnUnit(gapcloser.Sender, PacketCast);
             }
         }
 
         // Interrupter
         private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
-            if (!Config.SubMenu("Combo").Item("stopChannel").GetValue<bool>())
+            if (!Config.Item("stopChannel").GetValue<bool>())
             {
                 return;
             }
 
-            if ((unit.Distance(unit.Position) <= Q.Range) && Q.IsReady())
+            if (!(Player.Distance(unit) <= W.Range) || !W.IsReady())
             {
-                Q.CastOnUnit(unit, PacketCast);
+                return;
             }
+
+            W.CastOnUnit(unit, PacketCast);
         }
 
         //Killsteal
         private static void KillSteal()
         {
-            if (Config.Item("KillSteal").GetValue<bool>())
+            if (!Config.Item("KillSteal").GetValue<bool>())
             {
-                var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
-                if (target == null)
+                return;
+            }
+
+            var target = HeroManager.Enemies;
+            if (target == null)
+            {
+                return;
+            }
+
+            if (Q.IsReady())
+            {
+                foreach (var kstarget in from kstarget in target
+                    let actualHp =
+                        (HealthPrediction.GetHealthPrediction(kstarget, (int) (Player.Distance(kstarget) * 1000 / 1500)) <=
+                         kstarget.MaxHealth * 0.15)
+                            ? Player.GetSpellDamage(kstarget, SpellSlot.Q) * 2
+                            : Player.GetSpellDamage(kstarget, SpellSlot.Q)
+                    where
+                        kstarget.IsValidTarget() &&
+                        HealthPrediction.GetHealthPrediction(kstarget, (int) (Player.Distance(kstarget) * 1000 / 1500)) <=
+                        actualHp
+                    select kstarget)
                 {
+                    Q.CastOnUnit(kstarget, PacketCast);
                     return;
                 }
+            }
 
-                if (E.IsReady() && W.IsReady() && target.Health < W.GetDamage(target, 1) + E.GetDamage(target) &&
-                    ObjectManager.Player.Distance(target) <= E.Range + target.BoundingRadius)
+            if (IgniteSlot != SpellSlot.Unknown &&
+                ObjectManager.Player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready)
+            {
+                foreach (var kstarget in from kstarget in target
+                    where
+                        kstarget.IsValidTarget() &&
+                        kstarget.Health <=
+                        ObjectManager.Player.GetSummonerSpellDamage(kstarget, Damage.SummonerSpell.Ignite) &&
+                        ObjectManager.Player.Distance(kstarget) < 600
+                    select kstarget)
                 {
-                    E.Cast(target, PacketCast);
-                    W.Cast(target, PacketCast);
-                }
-                if (IgniteSlot != SpellSlot.Unknown &&
-                    ObjectManager.Player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready &&
-                    ObjectManager.Player.Distance(target) < 600)
-                {
-                    if (ObjectManager.Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite) > target.Health)
-                    {
-                        ObjectManager.Player.Spellbook.CastSpell(IgniteSlot, target);
-                    }
+                    ObjectManager.Player.Spellbook.CastSpell(IgniteSlot, kstarget);
                 }
             }
         }
@@ -337,113 +355,178 @@ namespace Fiddlesticks
         }
 
         //Combo
-        private static void Combo(Obj_AI_Base target)
+        public static void Combo(Obj_AI_Base target)
         {
-            if (target == null || Player.IsChannelingImportantSpell()) // Check if there is a target
+            if (target == null)
             {
                 return;
             }
 
-            if (!R.IsReady() && !Config.Item("useR").GetValue<bool>())
+            if (EFix())
             {
                 return;
             }
-            R.Cast(target.ServerPosition, PacketCast);
 
-            if (Config.Item("comboItems").GetValue<bool>())
-            {
-                UseItems(target);
-                return;
-            }
-
-            if (Config.Item("autoSmite").GetValue<bool>())
+            if (Config.Item("useSmite").GetValue<bool>())
             {
                 if (SmiteSlot != SpellSlot.Unknown && Player.Spellbook.CanUseSpell(SmiteSlot) == SpellState.Ready)
                 {
+                    if (Config.Item("smartSmite").GetValue<bool>())
+                    {
+                        if (Q.IsReady() && W.IsReady() && E.IsReady())
+                        {
+                            Player.Spellbook.CastSpell(SmiteSlot, target);
+                        }
+                    }
                     Player.Spellbook.CastSpell(SmiteSlot, target);
                 }
             }
 
-            if (!Q.IsReady() && (Config.Item("useQ").GetValue<bool>()))
+            if (Config.Item("comboItems").GetValue<bool>())
             {
-                return;
-            }
-            Q.CastOnUnit(target, PacketCast);
-
-            if (E.IsReady() && (Config.Item("useE").GetValue<bool>()))
-            {
-                E.CastOnUnit(target, PacketCast);
-                return;
+                UseItems(target);
             }
 
-            if (W.IsReady() && (Config.Item("useW").GetValue<bool>()))
+            if (Q.IsReady() && Config.Item("useQ").GetValue<bool>())
             {
-                Game.PrintChat("Hello");
-                Orbwalker.SetAttack(false);
-                Orbwalker.SetMovement(false);
+                Q.CastOnUnit(target, PacketCast);
+            }
+
+            if (W.IsReady() && Config.Item("useW").GetValue<bool>())
+            {
                 W.CastOnUnit(target, PacketCast);
             }
+
+            if (E.IsReady() && !W.IsReady() && Config.Item("useE").GetValue<bool>())
+            {
+                E.Cast(target, PacketCast);
+            }
         }
-        
+
         //Harass
-        private static void Harass(Obj_AI_Base target)
+        public static void Harass(Obj_AI_Base target)
         {
-            var harassKey = Config.Item("harassKey").GetValue<KeyBind>().Active;
-            var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex; //Select the Harass Mode
-            var mana = Player.MaxMana * (Config.Item("harassMana").GetValue<Slider>().Value / 100.0);
-
-            if (harassKey && target != null)
+            if (!Config.Item("harassKey").GetValue<KeyBind>().Active)
+            {
+                return;
+            }
+            if (target == null)
             {
                 return;
             }
 
-            if ((Player.Mana > mana))
+            if (EFix())
             {
-                switch (menuItem)
-                {
-                    case 0: //1st mode: E only
-                        if (E.IsReady())
-                        {
-                            E.CastOnUnit(target, PacketCast);
-                        }
-                        break;
-                    case 1: //2nd mode: Q and W
-                        if (Q.IsReady() && W.IsReady())
-                        {
-                            Q.CastOnUnit(target, PacketCast);
-                            W.CastOnUnit(target, PacketCast);
-                        }
-                        break;
-                    case 2: //3rd mode: Q, E and W
-                        if (Q.IsReady() && W.IsReady() && E.IsReady())
-                        {
-                            Q.CastOnUnit(target, PacketCast);
-                            E.CastOnUnit(target, PacketCast);
-                            W.CastOnUnit(target, PacketCast);
-                        }
-                        break;
-                }
+                return;
+            }
+
+            var mana = Player.MaxMana * (Config.Item("harassMana").GetValue<Slider>().Value / 100.0);
+            if (!(Player.Mana > mana))
+            {
+                return;
+            }
+
+            var menuItem = Config.Item("hMode").GetValue<StringList>().SelectedIndex;
+            switch (menuItem)
+            {
+                case 0:
+                    if (Q.IsReady())
+                    {
+                        Q.CastOnUnit(target, PacketCast);
+                    }
+                    break;
+                case 1:
+                    if (W.IsReady())
+                    {
+                        W.CastOnUnit(target, PacketCast);
+                    }
+
+                    if (!W.IsReady() && E.IsReady())
+                    {
+                        E.Cast(target, PacketCast);
+                    }
+                    break;
+                case 2:
+                    if (W.IsReady())
+                    {
+                        W.CastOnUnit(target, PacketCast);
+                    }
+
+                    if (!W.IsReady() && Q.IsReady())
+                    {
+                        Q.Cast(target, PacketCast);
+                    }
+                    break;
             }
         }
-        
-        //Farm
-        private static void Farm()
+
+        //Auto Q
+        public static void AutoQ(Obj_AI_Base target)
         {
-            var minions = MinionManager.GetMinions(Player.ServerPosition, W.Range);
-            var mana = Player.MaxMana * (Config.Item("farmMana").GetValue<Slider>().Value / 100.0);
-            if (!(Player.Mana > mana)) //Check if player has enough mana
+            if (!Config.Item("autoQ").GetValue<KeyBind>().Active)
             {
                 return;
+            }
+            if (target == null)
+            {
+                return;
+            }
+
+            var mana = Player.MaxMana * (Config.Item("harassMana").GetValue<Slider>().Value / 100.0);
+            if (!(Player.Mana > mana))
+            {
+                return;
+            }
+
+            if (Config.Item("autoQsmart").GetValue<bool>()
+                ? !Player.UnderTurret(true)
+                : Player.UnderTurret(true) && Player.Distance(target) <= Q.Range && Q.IsReady())
+            {
+                Q.CastOnUnit(target, PacketCast);
+            }
+        }
+
+        //Farm
+        public static void Farm()
+        {
+            if (EFix())
+            {
+                return;
+            }
+
+            var minions = MinionManager.GetMinions(Player.ServerPosition, Q.Range);
+            var mana = Player.MaxMana * (Config.Item("farmMana").GetValue<Slider>().Value / 100.0);
+            if (!(Player.Mana > mana))
+            {
+                return;
+            }
+
+            if (Config.Item("qFarm").GetValue<bool>() && Q.IsReady())
+            {
+                foreach (var minion in from minion in minions
+                    let actualHp =
+                        (HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion) * 1000 / 1500)) <=
+                         minion.MaxHealth * 0.15)
+                            ? Player.GetSpellDamage(minion, SpellSlot.Q) * 2
+                            : Player.GetSpellDamage(minion, SpellSlot.Q)
+                    where
+                        minion.IsValidTarget() &&
+                        HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion) * 1000 / 1500)) <=
+                        actualHp
+                    select minion)
+                {
+                    Q.CastOnUnit(minion, PacketCast);
+                    return;
+                }
             }
 
             if (Config.Item("eFarm").GetValue<bool>() && E.IsReady())
             {
-                // Logic for getting killable minions
                 foreach (var minion in
                     minions.Where(
                         minion =>
                             minion != null && minion.IsValidTarget(E.Range) &&
-                            HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion.Position))) <=
+                            HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion))) <
                             Player.GetSpellDamage(minion, SpellSlot.E)))
                 {
                     E.CastOnUnit(minion, PacketCast);
@@ -453,11 +536,15 @@ namespace Fiddlesticks
         }
 
         //Jungleclear
-        private static void JungleClear()
+        public static void JungleClear()
         {
-            // Get mobs in range, try to order them by max health to get the big ones
+            if (EFix())
+            {
+                return;
+            }
+
             var mobs = MinionManager.GetMinions(
-                Player.ServerPosition, W.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
+                Player.ServerPosition, Q.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
             if (mobs.Count <= 0)
             {
                 return;
@@ -468,34 +555,42 @@ namespace Fiddlesticks
             {
                 return;
             }
-            if (Config.Item("eJungle").GetValue<bool>() && E.IsReady())
+
+            if (Config.Item("qJungle").GetValue<bool>() && Q.IsReady())
             {
-                E.CastOnUnit(mob, PacketCast);
+                Q.CastOnUnit(mob, PacketCast);
             }
-            if (Config.Item("wJungle").GetValue<bool>() && W.IsReady())
+
+            if (Config.Item("wJungle").GetValue<bool>() && W.IsReady() && W.IsInRange(mob))
             {
                 W.CastOnUnit(mob, PacketCast);
+            }
+
+            if (Config.Item("eJungle").GetValue<bool>() && E.IsReady())
+            {
+                E.Cast(mob, PacketCast);
             }
         }
 
         //Combo Damage calculating
-        private static float ComboDamage(Obj_AI_Base target)
+        public static float ComboDamage(Obj_AI_Base target)
         {
             var dmg = 0d;
+            if (Q.IsReady())
+            {
+                dmg += (target.Health <= target.MaxHealth * 0.15)
+                    ? (Player.GetSpellDamage(target, SpellSlot.Q) * 2)
+                    : Player.GetSpellDamage(target, SpellSlot.Q);
+            }
 
             if (W.IsReady())
             {
-                dmg += Player.GetSpellDamage(target, SpellSlot.W, 1);
+                dmg += Player.GetSpellDamage(target, SpellSlot.W);
             }
 
             if (E.IsReady())
             {
                 dmg += Player.GetSpellDamage(target, SpellSlot.E);
-            }
-
-            if (R.IsReady())
-            {
-                dmg += Player.GetSpellDamage(target, SpellSlot.R, 1);
             }
 
             if (SmiteSlot != SpellSlot.Unknown && Player.Spellbook.CanUseSpell(SmiteSlot) == SpellState.Ready)
@@ -514,11 +609,22 @@ namespace Fiddlesticks
                 return;
             }
 
-            Int16[] targetedItems = { 3128 }; // DFG 
+            if (EFix())
+            {
+                return;
+            }
+
+            Int16[] targetedItems = { 3188, 3153, 3144, 3128, 3146, 3184 };
+            Int16[] nonTargetedItems = { 3180, 3131, 3074, 3077, 3142 };
 
             foreach (var itemId in targetedItems.Where(itemId => Items.HasItem(itemId) && Items.CanUseItem(itemId)))
             {
                 Items.UseItem(itemId, target);
+            }
+
+            foreach (var itemId in nonTargetedItems.Where(itemId => Items.HasItem(itemId) && Items.CanUseItem(itemId)))
+            {
+                Items.UseItem(itemId);
             }
         }
 
@@ -543,6 +649,17 @@ namespace Fiddlesticks
                 SmiteSlot = spell.Slot;
                 break;
             }
+        }
+
+        //E Fix
+        public static bool EFix()
+        {
+            if (Player.HasBuff("pantheonesound"))
+            {
+                UsingE = true;
+            }
+
+            return UsingE || Player.IsChannelingImportantSpell();
         }
     }
 }
