@@ -2,16 +2,22 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using LeagueSharp;
+using System.Text;
+using System.Threading.Tasks;
+
 using LeagueSharp.Common;
+using LeagueSharp;
+using LeagueSharp.Common.Data;
+using JungleAIO.Champions;
 
 #endregion
 
+using Color = System.Drawing.Color;
+
 namespace Pantheon
 {
-    public class Program
+    class Program
     {
         public const string CharName = "Pantheon";
         public static Orbwalking.Orbwalker Orbwalker;
@@ -33,7 +39,7 @@ namespace Pantheon
         public static Items.Item HPpot = new Items.Item(2003, 10);
         public static Items.Item Flask = new Items.Item(2041, 10);
 
-        public static void Main(string[] args)
+        public Pantheon()
         {
             CustomEvents.Game.OnGameLoad += OnLoad;
         }
@@ -250,7 +256,7 @@ namespace Pantheon
                 return;
             }
 
-            if (!(Player.Distance(unit) <= W.Range) || !W.IsReady())
+            // if (!(Player.Distance(unit) <= W.Range) || !W.IsReady())
             {
                 return;
             }
@@ -271,42 +277,43 @@ namespace Pantheon
             {
                 return;
             }
-
+            
             if (Q.IsReady())
             {
                 foreach (var kstarget in from kstarget in target
-                    let actualHp =
-                        (HealthPrediction.GetHealthPrediction(kstarget, (int) (Player.Distance(kstarget) * 1000 / 1500)) <=
-                         kstarget.MaxHealth * 0.15)
-                            ? Player.GetSpellDamage(kstarget, SpellSlot.Q) * 2
-                            : Player.GetSpellDamage(kstarget, SpellSlot.Q)
-                    where
-                        kstarget.IsValidTarget() &&
-                        HealthPrediction.GetHealthPrediction(kstarget, (int) (Player.Distance(kstarget) * 1000 / 1500)) <=
-                        actualHp
-                    select kstarget)
+                                         let actualHp =
+                                            (HealthPrediction.GetHealthPrediction(kstarget, (int)(Player.Distance(kstarget) * 1000 / 1500)) <=
+                                              kstarget.MaxHealth * 0.15)
+                                                 ? Player.GetSpellDamage(kstarget, SpellSlot.Q) * 2
+                                                 : Player.GetSpellDamage(kstarget, SpellSlot.Q)
+                                         where
+                                             kstarget.IsValidTarget() &&
+                                             HealthPrediction.GetHealthPrediction(kstarget, (int)(Player.Distance(kstarget) * 1000 / 1500)) <=
+                                             actualHp
+                                         select kstarget)
                 {
                     Q.CastOnUnit(kstarget, PacketCast);
                     return;
                 }
             }
+             
 
             if (IgniteSlot != SpellSlot.Unknown &&
                 ObjectManager.Player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready)
             {
                 foreach (var kstarget in from kstarget in target
-                    where
-                        kstarget.IsValidTarget() &&
-                        kstarget.Health <=
-                        ObjectManager.Player.GetSummonerSpellDamage(kstarget, Damage.SummonerSpell.Ignite) &&
-                        ObjectManager.Player.Distance(kstarget) < 600
-                    select kstarget)
+                                             where
+                                             kstarget.IsValidTarget() &&
+                                             kstarget.Health <=
+                                             ObjectManager.Player.GetSummonerSpellDamage(kstarget, Damage.SummonerSpell.Ignite) &&
+                                            ObjectManager.Player.Distance(kstarget) < 600
+                                         select kstarget)
                 {
                     ObjectManager.Player.Spellbook.CastSpell(IgniteSlot, kstarget);
                 }
             }
         }
-
+            
         //Auto pot
         private static void AutoPot()
         {
@@ -477,13 +484,14 @@ namespace Pantheon
             {
                 return;
             }
-
+            
             if (Config.Item("autoQsmart").GetValue<bool>()
                 ? !Player.UnderTurret(true)
                 : Player.UnderTurret(true) && Player.Distance(target) <= Q.Range && Q.IsReady())
             {
                 Q.CastOnUnit(target, PacketCast);
             }
+             
         }
 
         //Farm
@@ -501,19 +509,20 @@ namespace Pantheon
                 return;
             }
 
+            
             if (Config.Item("qFarm").GetValue<bool>() && Q.IsReady())
             {
                 foreach (var minion in from minion in minions
-                    let actualHp =
-                        (HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion) * 1000 / 1500)) <=
-                         minion.MaxHealth * 0.15)
-                            ? Player.GetSpellDamage(minion, SpellSlot.Q) * 2
-                            : Player.GetSpellDamage(minion, SpellSlot.Q)
-                    where
-                        minion.IsValidTarget() &&
-                        HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion) * 1000 / 1500)) <=
-                        actualHp
-                    select minion)
+                                       let actualHp =
+                                           (HealthPrediction.GetHealthPrediction(minion, (int)(Player.Distance(minion) * 1000 / 1500)) <=
+                                            minion.MaxHealth * 0.15)
+                                               ? Player.GetSpellDamage(minion, SpellSlot.Q) * 2
+                                               : Player.GetSpellDamage(minion, SpellSlot.Q)
+                                       where
+                                           minion.IsValidTarget() &&
+                                           HealthPrediction.GetHealthPrediction(minion, (int)(Player.Distance(minion) * 1000 / 1500)) <=
+                                           actualHp
+                                       select minion)
                 {
                     Q.CastOnUnit(minion, PacketCast);
                     return;
@@ -526,7 +535,7 @@ namespace Pantheon
                     minions.Where(
                         minion =>
                             minion != null && minion.IsValidTarget(E.Range) &&
-                            HealthPrediction.GetHealthPrediction(minion, (int) (Player.Distance(minion))) <
+                            HealthPrediction.GetHealthPrediction(minion, (int)(Player.Distance(minion))) <
                             Player.GetSpellDamage(minion, SpellSlot.E)))
                 {
                     E.CastOnUnit(minion, PacketCast);
@@ -535,6 +544,7 @@ namespace Pantheon
             }
         }
 
+             
         //Jungleclear
         public static void JungleClear()
         {
@@ -598,7 +608,7 @@ namespace Pantheon
                 dmg += Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Smite);
             }
 
-            return (float) dmg;
+            return (float)dmg;
         }
 
         //Items using 
