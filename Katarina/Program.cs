@@ -169,6 +169,7 @@ namespace Katarina
 
             //Necessary Stuff
             Drawing.OnDraw += Drawing_OnDraw;
+            Obj_AI_Base.OnPlayAnimation += PlayAnimation;
             Game.OnGameUpdate += Game_OnGameUpdate;
 
             //Announce that the assembly has been loaded
@@ -428,7 +429,7 @@ namespace Katarina
                             ObjectManager.Get<Obj_AI_Hero>()
                                 .Where(
                                     focus =>
-                                        focus.Distance(target.ServerPosition) <= Q.Range && focus.IsEnemy && !focus.IsMe &&
+                                        focus.Distance(focus.ServerPosition) <= Q.Range && focus.IsEnemy && !focus.IsMe &&
                                         !focus.IsInvulnerable && focus.IsValidTarget()))
                     {
                         //Variables
