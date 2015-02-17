@@ -47,7 +47,6 @@ namespace Katarina
             R = new Spell(SpellSlot.R, 550);
 
             IgniteSlot = Player.GetSpellSlot("summonerdot");
-            Dfg = new Items.Item((int) ItemId.Deathfire_Grasp, 750f);
 
             Spells.Add(Q);
             Spells.Add(W);
@@ -68,7 +67,6 @@ namespace Katarina
             //Combo Menu
             Config.AddSubMenu(new Menu("Smart Combo Settings", "combo"));
             Config.SubMenu("combo").AddItem(new MenuItem("smartR", "Use Smart R").SetValue(true));
-            Config.SubMenu("combo").AddItem(new MenuItem("useItems", "Use Items with Combo").SetValue(true));
             Config.SubMenu("combo").AddItem(new MenuItem("wjCombo", "Use WardJump in Combo").SetValue(true));
 
             //Killsteal
@@ -549,12 +547,6 @@ namespace Katarina
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && target.IsValidTarget() && !InUlt)
             {
-                //Cast DFG
-                if (Config.Item("useItems").GetValue<bool>() && Dfg.IsReady())
-                {
-                    Dfg.Cast(target);
-                }
-
                 //Smart Q->E
                 if (Q.IsInRange(target))
                 {
