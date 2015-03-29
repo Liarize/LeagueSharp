@@ -10,10 +10,10 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 
 [assembly: AssemblyTitle("FiddleSticks#")]
-[assembly: AssemblyDescription("Plays FiddleSticks")]
+[assembly: AssemblyDescription("Advanced Fiddlesticks Helper")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Jouza")]
-[assembly: AssemblyProduct("FiddleSticks")]
+[assembly: AssemblyProduct("Fiddlesticks Helper")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -39,5 +39,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("5.2.1.0")]
-[assembly: AssemblyFileVersion("5.2.1.0")]
+[assembly: AssemblyVersion("5.6.0.1")]
+[assembly: AssemblyFileVersion("5.6.0.1")]

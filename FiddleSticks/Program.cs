@@ -23,12 +23,12 @@ namespace Fiddlesticks
         public static Obj_AI_Hero Player = ObjectManager.Player;
         // Custom vars
         public static bool PacketCast;
-        public static bool InDrain;
         public static bool DebugEnabled;
         // Items
         public static Items.Item Biscuit = new Items.Item(2010, 10);
         public static Items.Item HPpot = new Items.Item(2003, 10);
         public static Items.Item Flask = new Items.Item(2041, 10);
+        public static Items.Item Zhonya = new Items.Item(3157);
         
 
         private static void Main(string[] args)
@@ -96,7 +96,6 @@ namespace Fiddlesticks
 
             //Jungle Clear Menu
             Config.AddSubMenu(new Menu("[FS] Jungle Clear Settings", "fiddlesticks.jungle"));
-            Config.SubMenu("fiddlesticks.jungle").AddItem(new MenuItem("jungle.useQ", "Clear with Q").SetValue(true));
             Config.SubMenu("fiddlesticks.jungle").AddItem(new MenuItem("jungle.useE", "Clear with E").SetValue(true));
             Config.SubMenu("fiddlesticks.jungle").AddItem(new MenuItem("jungle.useW", "Clear with W").SetValue(true));
 
@@ -115,8 +114,10 @@ namespace Fiddlesticks
             Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.interruptGapclosers", "Interrupt Gapclosers").SetValue(true));
             Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.usePackets", "Use Packets to Cast Spells").SetValue(true));
             Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.debug", "Enable debug").SetValue(false));
+            Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.autoZhonya.enabled", "Auto Zhonya").SetValue(true));
+            Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.autoZhonya.percent" "Auto Zhonya").SetValue(new Slider(10));
 
-            /*Config.SubMenu("misc")
+            /*Config.SubMenu("fiddlesticks.misc")
                 .AddItem(
                     new MenuItem("autolvlup", "Auto Level Spells").SetValue(
                         new StringList(new[] { "W>E>Q", "W>Q>E" })));*/
@@ -137,9 +138,7 @@ namespace Fiddlesticks
 
             //Make menu visible
             Config.AddToMainMenu();
-
             PacketCast = Config.Item("misc.usePackets").GetValue<bool>();
-            InDrain = DetectDrain();
             DebugEnabled = Config.Item("misc.debug").GetValue<bool>();
 
             //Damage Drawer
@@ -162,17 +161,16 @@ namespace Fiddlesticks
             // Select default target
             var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
 
-            if (InDrain)
+            if (InDrain())
             {
                 Orbwalker.SetAttack(false);
                 Orbwalker.SetMovement(false);
-                Notifications.AddNotification("Draining detected, Orbwalker stopped", 3);
+                Notifications.AddNotification("Draining detected, Orbwalker stopped", 3000);
             }
             else
             {
                 Orbwalker.SetAttack(true);
                 Orbwalker.SetMovement(true);
-                Notifications.AddNotification("Draining detected, Orbwalker stopped", 3);
             }
 
             //Main features with Orbwalker
@@ -195,9 +193,27 @@ namespace Fiddlesticks
             AutoPot();
             KillSteal();
             Harass(target);
+            InDrain();
+            AutoZhonya();
         }
 
-        private static bool DetectDrain()
+        //Auto Zhonya - not tested 
+        private static void AutoZhonya()
+        {
+            var zhonyaPercent = Player.MaxHealth*(Config.Item("misc.autoZhonya.percent").GetValue<Slider>().Value/100.0);
+
+            if (!Config.Item("misc.autoZhonya.enabled").GetValue<bool>();) return;
+            if (!Items.HasItem(Zhonya) return;
+            if (Player.HasBuff("Crowstorm"))
+            {
+                if (Player.HealthPercent < zhonyaPercent)
+                {
+                    Items.UseItem(Zhonya);
+                }
+            }
+        }
+
+        private static bool InDrain()
         {
             return Player.HasBuff("Drain") || Player.IsChannelingImportantSpell();
         }
@@ -279,11 +295,11 @@ namespace Fiddlesticks
         #region Smite KS
             if (SmiteSlot != SpellSlot.Unknown
                 || ObjectManager.Player.Spellbook.CanUseSpell(SmiteSlot) != SpellState.Ready
-                || !(ObjectManager.Player.Distance(target) < 600)) return
+                || !(ObjectManager.Player.Distance(target) < 600)) return;
 
             if (!(ObjectManager.Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Smite) > target.Health))
                 return;
-            ObjectManager.Player.Spellbook.CastSpell(SmiteSLot, target);
+            ObjectManager.Player.Spellbook.CastSpell(SmiteSlot, target);
             if (DebugEnabled) Game.PrintChat("Debug - Smite casted to KILLSTEAL.");
         #endregion
         }
@@ -379,13 +395,14 @@ namespace Fiddlesticks
             #endregion
 
             #region W Cast
-            if (!W.IsReady() || !Config.Item("combo.useW").GetValue<bool>() || InDrain) return;
+            if (!W.IsReady() || !Config.Item("combo.useW").GetValue<bool>() || InDrain()) return;
 
-            //Manually set the InDrain and prevent Orbwalking.
+            /*
+            //This should be automatic now ^^
             InDrain = true;
             Orbwalker.SetAttack(false);
             Orbwalker.SetMovement(false);
-
+            */
             W.CastOnUnit(target, PacketCast);
             if (DebugEnabled) Game.PrintChat("Debug - W used in COMBO");
 
@@ -442,13 +459,13 @@ namespace Fiddlesticks
         private static void Farm()
         {
             var minions = MinionManager.GetMinions(Player.ServerPosition, W.Range);
-            var mana = Player.MaxMana*(Config.Item("farmMana").GetValue<Slider>().Value/100.0);
+            var mana = Player.MaxMana*(Config.Item("farm.mana").GetValue<Slider>().Value/100.0);
             if (!(Player.Mana > mana)) //Check if player has enough mana
             {
                 return;
             }
 
-            if (Config.Item("eFarm").GetValue<bool>() && E.IsReady())
+            if (Config.Item("farm.useE").GetValue<bool>() && E.IsReady())
             {
                 // Logic for getting killable minions
                 foreach (var minion in
@@ -470,21 +487,17 @@ namespace Fiddlesticks
             // Get mobs in range, try to order them by max health to get the big ones
             var mobs = MinionManager.GetMinions(
                 Player.ServerPosition, W.Range, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
-            if (mobs.Count <= 0)
-            {
-                return;
-            }
+
+            if (mobs.Count <= 0) return;
 
             var mob = mobs[0];
-            if (mob == null)
-            {
-                return;
-            }
-            if (Config.Item("eJungle").GetValue<bool>() && E.IsReady())
+            if (mob == null) return;
+
+            if (Config.Item("jungle.useE").GetValue<bool>() && E.IsReady())
             {
                 E.CastOnUnit(mob, PacketCast);
             }
-            if (Config.Item("wJungle").GetValue<bool>() && W.IsReady())
+            if (Config.Item("jungle.useW").GetValue<bool>() && W.IsReady())
             {
                 W.CastOnUnit(mob, PacketCast);
             }
