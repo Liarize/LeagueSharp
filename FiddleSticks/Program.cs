@@ -115,7 +115,7 @@ namespace Fiddlesticks
             Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.usePackets", "Use Packets to Cast Spells").SetValue(true));
             Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.debug", "Enable debug").SetValue(false));
             Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.autoZhonya.enabled", "Auto Zhonya").SetValue(true));
-            Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.autoZhonya.percent" "Auto Zhonya").SetValue(new Slider(10));
+            Config.SubMenu("fiddlesticks.misc").AddItem(new MenuItem("misc.autoZhonya.percent", "Auto Zhonya").SetValue(new Slider(10)));
 
             /*Config.SubMenu("fiddlesticks.misc")
                 .AddItem(
@@ -202,13 +202,13 @@ namespace Fiddlesticks
         {
             var zhonyaPercent = Player.MaxHealth*(Config.Item("misc.autoZhonya.percent").GetValue<Slider>().Value/100.0);
 
-            if (!Config.Item("misc.autoZhonya.enabled").GetValue<bool>();) return;
-            if (!Items.HasItem(Zhonya) return;
+            if (!Config.Item("misc.autoZhonya.enabled").GetValue<bool>()) return;
+            if (!Items.HasItem(Zhonya.Id)) return;
             if (Player.HasBuff("Crowstorm"))
             {
                 if (Player.HealthPercent < zhonyaPercent)
                 {
-                    Items.UseItem(Zhonya);
+                    Items.UseItem(Zhonya.Id);
                 }
             }
         }
