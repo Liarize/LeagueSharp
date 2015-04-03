@@ -174,7 +174,7 @@ namespace Ryze
         //Auto SEmbrace
         private static void Autos()
         {
-            var SEmbracePercent = (Config.Item("misc.autoSEmbrace.percent").GetValue<Slider>().Value/100;
+            var SEmbracePercent = (Config.Item("misc.autoSEmbrace.percent").GetValue<Slider>().Value/100);
 
             if (!GetConfigBool("misc.autoSEmbrace.enabled")) return;
             if (!Items.HasItem(SEmbrace.Id)) return;
